@@ -1,0 +1,15 @@
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: Docker/Dockerfile
+    image: penguins-api:latest
+    container_name: penguins-api
+    ports:
+      - "8989:8989"
+    volumes:
+      - log_api:/log-api
+    restart: unless-stopped
+
+volumes:
+  log_api:

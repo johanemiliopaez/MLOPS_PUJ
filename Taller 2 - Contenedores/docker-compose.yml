@@ -1,0 +1,39 @@
+services:
+  fastapi:
+    build:
+      context: .
+      dockerfile: Docker/fastapi.Dockerfile
+    container_name: fastapi-model
+    ports:
+      - "8989:8989"
+    volumes:
+      - ./Setup/API:/app
+      - commons:/workspace/commons
+      - ./Setup/API:/workspace/commons/API
+      - ./Setup/Model:/workspace/commons/Model
+      - ./Setup/Dataset:/workspace/commons/Dataset
+    command: uvicorn main:app --host 0.0.0.0 --port 8989 --reload --reload-dir /app
+    environment:
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+
+  jupyterlab:
+    build:
+      context: .
+      dockerfile: Docker/jupyterlab.Dockerfile
+    container_name: jupyterlab-ml
+    ports:
+      - "8888:8888"
+    volumes:
+      - commons:/workspace/commons
+      - ./Setup/API:/workspace/commons/API
+      - ./Setup/Model:/workspace/commons/Model
+      - ./Setup/Dataset:/workspace/commons/Dataset
+    environment:
+      - PYTHONUNBUFFERED=1
+      - JUPYTER_TOKEN=
+    restart: unless-stopped
+
+volumes:
+  commons:
+    name: commons
