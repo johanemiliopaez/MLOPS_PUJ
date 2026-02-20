@@ -8,4 +8,4 @@ Repositorio académico de MLOps que reúne los talleres prácticos de la materia
 - **Taller 2 - Contenedores:** entorno con Docker Compose para ejecutar FastAPI + JupyterLab en paralelo, con volumen compartido para datos, código y artefactos.
 
 
-```
+
