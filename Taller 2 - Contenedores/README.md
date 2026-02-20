@@ -25,7 +25,7 @@ MLops-taller2/
 │   │   └── main.py
 │   ├── Model/
 │   │   ├── train.py
-│   │   └── train_step_by_step.ipynb
+│   │   └── prueba.ipynb
 │   ├── Dataset/
 │   │   └── penguins.csv
 │   └── pyproject.toml
@@ -140,4 +140,4 @@ Respuesta esperada (ejemplo):
 2. Si agregas un modelo nuevo (por ejemplo `NN.pkl`), actualiza `Setup/API/main.py` con su ruta y endpoint.
 3. FastAPI recarga automaticamente al guardar `main.py` por `--reload`.
 
-Nota: si cambias solo un `.pkl` sin cambiar codigo, la API usara el archivo nuevo segun la logica de carga definida en `main.py`.
+Nota: si cambias solo un `.pkl` sin cambiar codigo, debes reiniciar el servicio `fastapi` para recargar los modelos en memoria.
