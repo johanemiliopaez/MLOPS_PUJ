@@ -25,17 +25,3 @@ MLOPS_PUJ/
 │   └── README.md
 └── README.md
 ```
-
-## Objetivo de aprendizaje
-
-Aplicar fundamentos de MLOps para:
-
-1. entrenar modelos reproducibles,
-2. exponer inferencia mediante servicios HTTP,
-3. contenerizar componentes del sistema,
-4. ejecutar flujos de desarrollo y despliegue local con Docker.
-
-## Guía rápida
-
-- Si quieres trabajar el flujo **modelo + API + Docker básico**, comienza por `Taller 1 - Penguins/README.md`.
-- Si quieres trabajar el flujo **multicontenedor (FastAPI + JupyterLab)**, comienza por `Taller 2 - Contenedores/README.md`.
