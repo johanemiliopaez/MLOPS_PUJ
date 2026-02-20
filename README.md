@@ -1,6 +1,6 @@
 # MLOPS_PUJ
 
-Repositorio académico de MLOps que reúne dos talleres prácticos enfocados en el ciclo completo de un modelo de machine learning: entrenamiento, empaquetado y despliegue de una API de inferencia para clasificación de especies de pingüinos.
+Repositorio académico de MLOps que reúne los talleres prácticos de la materia MLOPS_PUJ
 
 ## Resumen del repositorio
 
