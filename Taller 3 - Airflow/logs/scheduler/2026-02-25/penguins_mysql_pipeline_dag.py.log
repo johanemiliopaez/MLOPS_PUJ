@@ -647,3 +647,10 @@
 [2026-02-25T05:51:47.789+0000] {logging_mixin.py:149} INFO - [2026-02-25T05:51:47.789+0000] {dag.py:2726} INFO - Sync 1 DAGs
 [2026-02-25T05:51:47.814+0000] {logging_mixin.py:149} INFO - [2026-02-25T05:51:47.814+0000] {dag.py:3490} INFO - Setting next_dagrun for penguins_mysql_pipeline to None, run_after=None
 [2026-02-25T05:51:47.829+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/penguins_mysql_pipeline_dag.py took 0.093 seconds
+[2026-02-25T05:52:18.340+0000] {processor.py:156} INFO - Started process (PID=2960) to work on /opt/airflow/dags/penguins_mysql_pipeline_dag.py
+[2026-02-25T05:52:18.342+0000] {processor.py:799} INFO - Processing file /opt/airflow/dags/penguins_mysql_pipeline_dag.py for tasks to queue
+[2026-02-25T05:52:18.343+0000] {logging_mixin.py:149} INFO - [2026-02-25T05:52:18.343+0000] {dagbag.py:541} INFO - Filling up the DagBag from /opt/airflow/dags/penguins_mysql_pipeline_dag.py
+[2026-02-25T05:52:18.355+0000] {processor.py:809} INFO - DAG(s) dict_keys(['penguins_mysql_pipeline']) retrieved from /opt/airflow/dags/penguins_mysql_pipeline_dag.py
+[2026-02-25T05:52:18.401+0000] {logging_mixin.py:149} INFO - [2026-02-25T05:52:18.401+0000] {dag.py:2726} INFO - Sync 1 DAGs
+[2026-02-25T05:52:18.421+0000] {logging_mixin.py:149} INFO - [2026-02-25T05:52:18.421+0000] {dag.py:3490} INFO - Setting next_dagrun for penguins_mysql_pipeline to None, run_after=None
+[2026-02-25T05:52:18.434+0000] {processor.py:178} INFO - Processing /opt/airflow/dags/penguins_mysql_pipeline_dag.py took 0.101 seconds
