@@ -1,0 +1,31 @@
+[2026-02-25T04:56:10.696+0000] {taskinstance.py:1125} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: penguins_mysql_pipeline.step_1_clear_tables manual__2026-02-25T04:56:08.454580+00:00 [queued]>
+[2026-02-25T04:56:10.702+0000] {taskinstance.py:1125} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: penguins_mysql_pipeline.step_1_clear_tables manual__2026-02-25T04:56:08.454580+00:00 [queued]>
+[2026-02-25T04:56:10.702+0000] {taskinstance.py:1331} INFO - Starting attempt 1 of 1
+[2026-02-25T04:56:10.710+0000] {taskinstance.py:1350} INFO - Executing <Task(PythonOperator): step_1_clear_tables> on 2026-02-25 04:56:08.454580+00:00
+[2026-02-25T04:56:10.716+0000] {standard_task_runner.py:57} INFO - Started process 205 to run task
+[2026-02-25T04:56:10.719+0000] {standard_task_runner.py:84} INFO - Running: ['***', 'tasks', 'run', 'penguins_mysql_pipeline', 'step_1_clear_tables', 'manual__2026-02-25T04:56:08.454580+00:00', '--job-id', '5', '--raw', '--subdir', 'DAGS_FOLDER/penguins_mysql_pipeline_dag.py', '--cfg-path', '/tmp/tmp00z61a20']
+[2026-02-25T04:56:10.722+0000] {standard_task_runner.py:85} INFO - Job 5: Subtask step_1_clear_tables
+[2026-02-25T04:56:10.763+0000] {task_command.py:410} INFO - Running <TaskInstance: penguins_mysql_pipeline.step_1_clear_tables manual__2026-02-25T04:56:08.454580+00:00 [running]> on host 62528f687177
+[2026-02-25T04:56:10.825+0000] {taskinstance.py:1570} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='***' AIRFLOW_CTX_DAG_ID='penguins_mysql_pipeline' AIRFLOW_CTX_TASK_ID='step_1_clear_tables' AIRFLOW_CTX_EXECUTION_DATE='2026-02-25T04:56:08.454580+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2026-02-25T04:56:08.454580+00:00'
+[2026-02-25T04:56:10.828+0000] {taskinstance.py:1847} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/operators/python.py", line 181, in execute
+    return_value = self.execute_callable()
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/operators/python.py", line 198, in execute_callable
+    return self.python_callable(*self.op_args, **self.op_kwargs)
+  File "/opt/airflow/dags/penguins_mysql_pipeline_dag.py", line 42, in step_1_clear_tables
+    engine = _get_engine()
+  File "/opt/airflow/dags/penguins_mysql_pipeline_dag.py", line 36, in _get_engine
+    return create_engine(uri)
+  File "<string>", line 2, in create_engine
+  File "/home/airflow/.local/lib/python3.7/site-packages/sqlalchemy/util/deprecations.py", line 375, in warned
+    return fn(*args, **kwargs)
+  File "/home/airflow/.local/lib/python3.7/site-packages/sqlalchemy/engine/create.py", line 544, in create_engine
+    dbapi = dialect_cls.dbapi(**dbapi_args)
+  File "/home/airflow/.local/lib/python3.7/site-packages/sqlalchemy/dialects/mysql/pymysql.py", line 80, in dbapi
+    return __import__("pymysql")
+ModuleNotFoundError: No module named 'pymysql'
+[2026-02-25T04:56:10.835+0000] {taskinstance.py:1373} INFO - Marking task as FAILED. dag_id=penguins_mysql_pipeline, task_id=step_1_clear_tables, execution_date=20260225T045608, start_date=20260225T045610, end_date=20260225T045610
+[2026-02-25T04:56:10.841+0000] {standard_task_runner.py:109} ERROR - Failed to execute job 5 for task step_1_clear_tables (No module named 'pymysql'; 205)
+[2026-02-25T04:56:10.860+0000] {local_task_job_runner.py:232} INFO - Task exited with return code 1
+[2026-02-25T04:56:10.877+0000] {taskinstance.py:2674} INFO - 0 downstream tasks scheduled from follow-on schedule check
