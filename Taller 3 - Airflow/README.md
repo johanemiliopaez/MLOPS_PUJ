@@ -136,74 +136,25 @@ Flujo del DAG:
 2. Activa `penguins_mysql_pipeline`.
 3. Ejecuta un run manual desde la UI.
 
-### Verificación rápida de modelos:
+## Verificación rápida de modelos:
 <p align="center">
 <img width="1710" height="534" alt="image" src="https://github.com/user-attachments/assets/6e0e8500-a15a-467a-830f-9fb8d410cb1b" />
 </p>
 
-### step_2_load_raw y  step_3_preprocess
+## step_2_load_raw y  step_3_preprocess
 <p align="center">
 <img width="1076" height="505" alt="image" src="https://github.com/user-attachments/assets/5feec318-c702-426a-ac0b-b60a190bdd54" />
 </p>
 
 
-## Ejecutar FastAPI
-
-Construir y levantar solo el servicio:
-
-```bash
-docker compose up -d --build fastapi
-```
+##  step_4_train y  Ejecutar FastAPI
+<p align="center">
+<img width="383" height="437" alt="image" src="https://github.com/user-attachments/assets/f423e948-4d96-496e-97a3-0784cc65b7f2" />
+</p>
 
 Prueba rápida:
+<p align="center">
+<img width="825" height="550" alt="image" src="https://github.com/user-attachments/assets/8289b465-e321-440f-be10-b14144cdbdb3" />
+</p>
 
-```bash
-curl -X POST "http://localhost:8989/rf" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "island": "Biscoe",
-    "bill_length_mm": 48.7,
-    "bill_depth_mm": 14.1,
-    "flipper_length_mm": 210,
-    "body_mass_g": 4450,
-    "sex": "male",
-    "year": 2008
-  }'
-```
 
-## Comandos útiles
-
-Detener servicios:
-
-```bash
-docker compose down
-```
-
-Detener y eliminar volúmenes (reinicio limpio):
-
-```bash
-docker compose down -v
-```
-
-Ver logs de todos los servicios:
-
-```bash
-docker compose logs -f
-```
-
-## Ejecutar Flower (opcional)
-
-Para monitorizar workers Celery:
-
-```bash
-docker compose --profile flower up -d
-```
-
-- URL Flower: `http://localhost:5555`
-
-## Notas
-
-- El archivo `docker-compose.yaml` usa una plantilla oficial de Airflow para entorno local.
-- Si cambias scripts en `mysql-init` y ya existe el volumen MySQL, esos scripts no se re-ejecutan automáticamente.
-- Para reinicializar DB de MySQL desde cero: `docker compose down -v && docker compose up -d`.
-- No se recomienda este stack tal cual para producción.
