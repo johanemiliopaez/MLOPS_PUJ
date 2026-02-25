@@ -137,10 +137,9 @@ Flujo del DAG:
 3. Ejecuta un run manual desde la UI.
 
 Verificación rápida de modelos:
-
-```bash
-docker compose exec airflow-webserver ls -lah /shared/modelos
-```
+<p align="center">
+<img width="1710" height="534" alt="image" src="https://github.com/user-attachments/assets/6e0e8500-a15a-467a-830f-9fb8d410cb1b" />
+</p>
 
 ## Ejecutar FastAPI
 
