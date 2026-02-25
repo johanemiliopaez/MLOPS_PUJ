@@ -58,6 +58,12 @@ En el primer arranque:
 docker compose ps
 docker compose logs -f airflow-webserver
 ```
+<p align="center">
+<img width="332" height="512" alt="image" src="https://github.com/user-attachments/assets/e37eac4c-f37e-40f0-bede-e324b9bc448a" />
+<img width="888" height="584" alt="image" src="https://github.com/user-attachments/assets/2a158f5b-d0cf-46c8-92ea-d5952ab680d6" />
+</p>
+
+
 
 ## Acceso a la interfaz
 
