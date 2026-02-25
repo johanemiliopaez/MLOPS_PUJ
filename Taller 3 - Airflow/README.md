@@ -34,11 +34,6 @@ Adicionalmente, el volumen `shared-data` se monta en `/shared` y contiene:
 - `/shared/dataset/penguins.csv`
 - `/shared/modelos/RF.pkl` y `/shared/modelos/LR.pkl` (salida del DAG)
 
-Si no existen, créalos antes de levantar los servicios:
-
-```bash
-mkdir -p dags logs plugins mysql-init
-```
 
 ## Levantar el entorno
 
