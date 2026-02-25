@@ -91,6 +91,9 @@ Tablas inicializadas:
 Script de inicialización:
 
 - `mysql-init/create_table_penguins.sh`
+<p align="center">
+<img width="1318" height="595" alt="image" src="https://github.com/user-attachments/assets/730222cf-5a87-4d32-bb98-cb1cb0ed23ec" />
+</p>
 
 ## FastAPI del taller
 
@@ -108,6 +111,11 @@ Recarga de modelos:
 
 - El API lee modelos desde `/shared/modelos`.
 - Si `RF.pkl` o `LR.pkl` cambian (por una nueva ejecución del DAG), la API recarga automáticamente el modelo actualizado sin reiniciar contenedor.
+
+<p align="center">
+<img width="391" height="400" alt="image" src="https://github.com/user-attachments/assets/e0375067-cba2-4893-83ac-e5131aa37554" />
+</p>
+
 
 ## DAG de pipeline Penguins
 
