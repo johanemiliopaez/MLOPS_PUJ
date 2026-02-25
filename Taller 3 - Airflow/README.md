@@ -70,9 +70,9 @@ docker compose logs -f airflow-webserver
 - URL: `http://localhost:8080`
 - Usuario por defecto: `airflow`
 - Contraseña por defecto: `airflow`
-
-> Puedes cambiar credenciales con variables de entorno:
-> `_AIRFLOW_WWW_USER_USERNAME` y `_AIRFLOW_WWW_USER_PASSWORD`.
+<p align="center">
+<img width="1723" height="498" alt="image" src="https://github.com/user-attachments/assets/fd57b52d-2994-42e1-afb5-b179e6b15039" />
+</p>
 
 ## MySQL del taller
 
