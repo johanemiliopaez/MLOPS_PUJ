@@ -9,7 +9,10 @@ Pipeline MLOps con Apache Airflow para el caso de Penguins, integrando:
 - `FastAPI` para inferencia con modelos entrenados por Airflow
 - volumen compartido `/shared` entre contenedores
 
-Esta configuración está orientada a **desarrollo y pruebas locales**.
+## Arquitectura de la solucion
+<p align="center">
+<img width="770" height="559" alt="image" src="https://github.com/user-attachments/assets/410d4e45-59a1-4ebc-bcf8-1194cf0dbc18" />
+</p>
 
 ## Prerrequisitos
 
