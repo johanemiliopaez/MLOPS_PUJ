@@ -36,10 +36,33 @@ def _get_engine():
     return create_engine(uri)
 
 
+def _ensure_tables_exist(engine):
+    from sqlalchemy import text
+
+    create_sql = f"""
+    CREATE TABLE IF NOT EXISTS {RAW_TABLE} (
+      species VARCHAR(50),
+      island VARCHAR(50),
+      bill_length_mm VARCHAR(50),
+      bill_depth_mm VARCHAR(50),
+      flipper_length_mm VARCHAR(50),
+      body_mass_g VARCHAR(50),
+      sex VARCHAR(50),
+      year VARCHAR(50)
+    );
+    CREATE TABLE IF NOT EXISTS {CURATED_TABLE} LIKE {RAW_TABLE};
+    """
+    with engine.begin() as conn:
+        for stmt in create_sql.strip().split(";"):
+            if stmt.strip():
+                conn.execute(text(stmt))
+
+
 def step_1_clear_tables():
     from sqlalchemy import text
 
     engine = _get_engine()
+    _ensure_tables_exist(engine)
     with engine.begin() as conn:
         conn.execute(text(f"DELETE FROM {RAW_TABLE}"))
         conn.execute(text(f"DELETE FROM {CURATED_TABLE}"))
@@ -161,7 +184,7 @@ def step_4_train():
         transformers.append(("num", StandardScaler(), numeric_features))
     if categorical_features:
         transformers.append(
-            ("cat", OneHotEncoder(handle_unknown="ignore", sparse_output=False), categorical_features)
+            ("cat", OneHotEncoder(handle_unknown="ignore", sparse=False), categorical_features)
         )
     preprocessor = ColumnTransformer(transformers, remainder="passthrough")
 
