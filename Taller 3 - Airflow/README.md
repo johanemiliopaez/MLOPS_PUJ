@@ -136,10 +136,16 @@ Flujo del DAG:
 2. Activa `penguins_mysql_pipeline`.
 3. Ejecuta un run manual desde la UI.
 
-Verificación rápida de modelos:
+### Verificación rápida de modelos:
 <p align="center">
 <img width="1710" height="534" alt="image" src="https://github.com/user-attachments/assets/6e0e8500-a15a-467a-830f-9fb8d410cb1b" />
 </p>
+
+### step_2_load_raw y  step_3_preprocess
+<p align="center">
+<img width="1076" height="505" alt="image" src="https://github.com/user-attachments/assets/5feec318-c702-426a-ac0b-b60a190bdd54" />
+</p>
+
 
 ## Ejecutar FastAPI
 
