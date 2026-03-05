@@ -197,7 +197,9 @@ async def read_data(
         timestamps[str(group_number)][1] += 2 if timestamps[str(group_number)][1] == -1 else 1
     
     # Utilizar los mismos datos que la última vez (una parte del mismo grupo de información)
-    random_data = get_batch_data(group_number)
+    # Mapear group_number (1-10) a batch index (0-9)
+    batch_index = (group_number - 1) % 10
+    random_data = get_batch_data(batch_index)
     with open('data/timestamps.json', 'w') as file:
         file.write(json.dumps(timestamps))
     
