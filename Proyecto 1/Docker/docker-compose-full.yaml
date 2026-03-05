@@ -41,7 +41,7 @@ services:
   minio:
     image: minio/minio:latest
     container_name: data-p2-minio
-    command: server /data
+    command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin
