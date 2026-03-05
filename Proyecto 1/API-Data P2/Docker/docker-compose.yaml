@@ -5,7 +5,7 @@ services:
       dockerfile: Docker/Dockerfile
     container_name: data-p2-api
     ports:
-      - "8080:80"
+      - "8888:80"
     volumes:
       - ../data:/app/data
     restart: unless-stopped

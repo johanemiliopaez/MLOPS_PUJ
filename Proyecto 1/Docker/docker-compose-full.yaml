@@ -52,6 +52,20 @@ services:
       - minio-data:/data
     restart: unless-stopped
 
+  minio-init:
+    image: minio/mc:latest
+    container_name: data-p2-minio-init
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      mc alias set myminio http://minio:9000 minioadmin minioadmin;
+      mc mb myminio/models --ignore-existing;
+      exit 0;
+      "
+    restart: "no"
+
   airflow-init:
     image: apache/airflow:2.6.0
     container_name: data-p2-airflow-init
@@ -120,24 +134,43 @@ services:
     command: scheduler
     restart: unless-stopped
 
-  api:
+  api-model:
     build:
-      context: ../Data P2
+      context: ../API-Model
       dockerfile: Docker/Dockerfile
-    container_name: data-p2-api
+    image: api-model:latest
+    pull_policy: never
+    container_name: api-model
     ports:
       - "8989:80"
-    volumes:
-      - ../Data P2/data:/app/data
+    environment:
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: models
+    depends_on:
+      minio-init:
+        condition: service_completed_successfully
     restart: unless-stopped
 
   jupyter:
-    image: jupyter/scipy-notebook:latest
+    build:
+      context: .
+      dockerfile: jupyter.Dockerfile
+    image: data-p2-jupyter:latest
+    pull_policy: never
     container_name: data-p2-jupyter
     ports:
       - "8888:8888"
     environment:
       JUPYTER_TOKEN: jupyter
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: models
+    depends_on:
+      minio-init:
+        condition: service_completed_successfully
     volumes:
       - ../Data P2:/home/jovyan/work
     restart: unless-stopped
