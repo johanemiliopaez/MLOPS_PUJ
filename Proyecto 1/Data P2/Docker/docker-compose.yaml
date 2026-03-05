@@ -1,0 +1,11 @@
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: Docker/Dockerfile
+    container_name: data-p2-api
+    ports:
+      - "8080:80"
+    volumes:
+      - ../data:/app/data
+    restart: unless-stopped
