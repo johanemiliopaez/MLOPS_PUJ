@@ -76,26 +76,21 @@ DAG de Airflow que automatiza la **ingestión y preparación** de datos Forest C
 ### Flujo de tareas
 
 ```
-extract_data_from_api → load_data → clean_data → transform_data → validate_data → feature_engineering → store_prepared_data
+extract_data_from_api → load_data → clean_data → transform_data → validate_data → feature_engineering → split → store_prepared_data
 ```
 
 ### Tareas
 
 | # | Task | Descripción |
 |---|------|-------------|
-| 1 | **extract_data_from_api** | Consulta la API con `group_number` (batch 1-10), obtiene datos y persiste el siguiente batch |
+| 1 | **extract_data_from_api** | Consulta la API con `group_number=1` y obtiene los datos |
 | 2 | **load_data** | Inserta datos crudos en MySQL `data_raw` |
 | 3 | **clean_data** | Elimina nulos, vacíos, duplicados y valores no numéricos |
 | 4 | **transform_data** | Estandarización z-score de columnas numéricas |
 | 5 | **validate_data** | Verifica ausencia de nulos |
 | 6 | **feature_engineering** | Passthrough (extensible en Jupyter) |
-| 7 | **store_prepared_data** | Inserta datos preparados en MySQL `data_prepared` |
-
-### Batch cíclico
-
-- **Variable:** `data_ingestion_next_batch`
-- **Secuencia:** 1 → 2 → … → 10 → 1 → …
-- El batch se gestiona automáticamente; no se pasa manualmente.
+| 7 | **split** | Divide 80% train / 20% test, etiqueta `data_type` (train/test) |
+| 8 | **store_prepared_data** | Inserta datos preparados en MySQL `data_prepared` |
 
 ### Cómo ejecutar el DAG
 

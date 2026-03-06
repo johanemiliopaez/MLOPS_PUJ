@@ -1,8 +1,8 @@
 """
 DAG de ingestión y preparación de datos - Proyecto 2 MLOps.
 
-Objetivo: automatizar únicamente la ingestión y preparación de datos.
-No hace split, entrenamiento, evaluación ni selección de modelos.
+Objetivo: automatizar la ingestión, preparación y split de datos.
+No hace entrenamiento, evaluación ni selección de modelos.
 
 Etapas:
 1. extract_data_from_api - Consultar API Data
@@ -11,23 +11,24 @@ Etapas:
 4. transform_data - Transformación
 5. validate_data - Validación
 6. feature_engineering - Ingeniería de características
-7. store_prepared_data - Cargar en data_prepared
+7. split - Divide 80% train / 20% test, etiqueta data_type
+8. store_prepared_data - Cargar en data_prepared
 
-El batch_number (group_number para la API) cicla 1→10→1 automáticamente.
+Siempre usa group_number=1 en la consulta a la API.
 """
 
 from datetime import datetime, timedelta
+import random
 import requests
 import pandas as pd
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from airflow.models import Variable
 from airflow.providers.mysql.hooks.mysql import MySqlHook
 
 # Configuración
 API_DATA_URL = "http://api-data-p2:80/data"
 MYSQL_CONN_ID = "mysql_data"
-VARIABLE_NEXT_BATCH = "data_ingestion_next_batch"
+GROUP_NUMBER = 1
 
 # Columnas del dataset Forest Cover Type (orden de la API)
 DATA_COLUMNS = [
@@ -47,25 +48,13 @@ DATA_COLUMNS = [
 ]
 
 
-def get_and_advance_batch(**context):
-    """Obtiene el batch actual, lo usa y persiste el siguiente (1-10 cíclico)."""
-    next_batch = Variable.get(VARIABLE_NEXT_BATCH, default_var=1)
-    next_batch = int(next_batch)
-    current_batch = next_batch
-    # Siguiente: si era 10, vuelve a 1; si no, +1
-    next_batch = 1 if current_batch >= 10 else current_batch + 1
-    Variable.set(VARIABLE_NEXT_BATCH, next_batch)
-    return current_batch
-
-
 def extract_data_from_api(**context):
-    """Consulta la API con group_number (batch) y devuelve los datos."""
-    batch = get_and_advance_batch(**context)
-    resp = requests.get(API_DATA_URL, params={"group_number": batch}, timeout=30)
+    """Consulta la API con group_number=1 y devuelve los datos."""
+    resp = requests.get(API_DATA_URL, params={"group_number": GROUP_NUMBER}, timeout=30)
     resp.raise_for_status()
     payload = resp.json()
     data = payload.get("data", [])
-    group_number = payload.get("group_number", batch)
+    group_number = payload.get("group_number", GROUP_NUMBER)
     # Empujar a XCom para tareas siguientes
     context["ti"].xcom_push(key="group_number", value=group_number)
     context["ti"].xcom_push(key="raw_data", value=data)
@@ -196,12 +185,33 @@ def feature_engineering(**context):
     return len(prepared)
 
 
-def store_prepared_data(**context):
-    """Carga los datos preparados en la tabla data_prepared."""
+def split(**context):
+    """Divide los datos 80% train / 20% test y etiqueta el campo data_type."""
     ti = context["ti"]
     prepared = ti.xcom_pull(task_ids="feature_engineering", key="prepared_data")
     group_number = ti.xcom_pull(task_ids="feature_engineering", key="group_number")
     if not prepared:
+        ti.xcom_push(key="group_number", value=group_number)
+        ti.xcom_push(key="split_data", value=[])
+        return 0
+    random.shuffle(prepared)
+    n = len(prepared)
+    split_idx = int(n * 0.8)
+    train_rows = prepared[:split_idx]
+    test_rows = prepared[split_idx:]
+    # Cada fila: [v1, v2, ..., v13, data_type]
+    split_data = [[*row, "train"] for row in train_rows] + [[*row, "test"] for row in test_rows]
+    ti.xcom_push(key="group_number", value=group_number)
+    ti.xcom_push(key="split_data", value=split_data)
+    return len(split_data)
+
+
+def store_prepared_data(**context):
+    """Carga los datos preparados (con data_type) en la tabla data_prepared."""
+    ti = context["ti"]
+    split_data = ti.xcom_pull(task_ids="split", key="split_data")
+    group_number = ti.xcom_pull(task_ids="split", key="group_number")
+    if not split_data:
         return 0
     hook = MySqlHook(mysql_conn_id=MYSQL_CONN_ID)
     conn = hook.get_conn()
@@ -212,16 +222,18 @@ def store_prepared_data(**context):
             horizontal_distance_to_hydrology, vertical_distance_to_hydrology,
             horizontal_distance_to_roadways, hillshade_9am, hillshade_noon,
             hillshade_3pm, horizontal_distance_to_fire_points,
-            wilderness_area, soil_type, cover_type
-        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            wilderness_area, soil_type, cover_type, data_type
+        ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     """
-    for row in prepared:
-        vals = [group_number] + [str(v)[:255] if v is not None else "" for v in row[:13]]
+    for row in split_data:
+        data_vals = [str(v)[:255] if v is not None else "" for v in row[:13]]
+        data_type_val = str(row[13])[:100] if len(row) > 13 else ""
+        vals = [group_number] + data_vals + [data_type_val]
         cur.execute(insert_sql, vals)
     conn.commit()
     cur.close()
     conn.close()
-    return len(prepared)
+    return len(split_data)
 
 
 with DAG(
@@ -257,8 +269,12 @@ with DAG(
         python_callable=feature_engineering,
     )
     t7 = PythonOperator(
+        task_id="split",
+        python_callable=split,
+    )
+    t8 = PythonOperator(
         task_id="store_prepared_data",
         python_callable=store_prepared_data,
     )
 
-    t1 >> t2 >> t3 >> t4 >> t5 >> t6 >> t7
+    t1 >> t2 >> t3 >> t4 >> t5 >> t6 >> t7 >> t8

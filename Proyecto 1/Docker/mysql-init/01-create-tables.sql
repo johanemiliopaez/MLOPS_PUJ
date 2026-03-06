@@ -34,5 +34,6 @@ CREATE TABLE IF NOT EXISTS data_prepared (
     horizontal_distance_to_fire_points VARCHAR(255),
     wilderness_area VARCHAR(255),
     soil_type VARCHAR(255),
-    cover_type VARCHAR(255)
+    cover_type VARCHAR(255),
+    data_type VARCHAR(100)
 );
