@@ -1,11 +1,18 @@
-# Docker Compose: Airflow + MinIO + PostgreSQL + FastAPI
+# Docker Compose: Airflow (CeleryExecutor) + MinIO + PostgreSQL + MySQL + FastAPI
 #
 # CREDENCIALES ADMINISTRADOR (cambiar en producción):
 # --------------------------------------------------
-# PostgreSQL:
+# PostgreSQL (solo metadata de Airflow):
 #   Usuario: airflow
 #   Clave:   airflow
 #   DB:      airflow
+#
+# MySQL (data_raw, data_prepared):
+#   Usuario: airflow_user
+#   Clave:   airflow_pass
+#   DB:      airflow_data
+#
+# Redis: broker de Celery (sin auth)
 #
 # MinIO (consola web):
 #   Usuario: minioadmin
@@ -24,7 +31,7 @@
 services:
   postgres:
     image: postgres:13
-    container_name: data-p2-postgres
+    container_name: postgres
     environment:
       POSTGRES_USER: airflow
       POSTGRES_PASSWORD: airflow
@@ -38,9 +45,43 @@ services:
       start_period: 5s
     restart: unless-stopped
 
+  redis:
+    image: redis:latest
+    container_name: redis
+    expose:
+      - 6379
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 30s
+      retries: 50
+      start_period: 30s
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.0
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-airflow_data}
+      MYSQL_USER: ${MYSQL_USER:-airflow_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-airflow_pass}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-db-volume:/var/lib/mysql
+      - ./mysql-init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$${MYSQL_ROOT_PASSWORD} || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
   minio:
     image: minio/minio:latest
-    container_name: data-p2-minio
+    container_name: minio
     command: server /data --console-address ":9001"
     environment:
       MINIO_ROOT_USER: minioadmin
@@ -54,7 +95,7 @@ services:
 
   minio-init:
     image: minio/mc:latest
-    container_name: data-p2-minio-init
+    container_name: minio-init
     depends_on:
       - minio
     entrypoint: >
@@ -68,45 +109,65 @@ services:
 
   airflow-init:
     image: apache/airflow:2.6.0
-    container_name: data-p2-airflow-init
+    container_name: airflow-init
     environment:
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__EXECUTOR: CeleryExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres/airflow
+      AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
       AIRFLOW__CORE__FERNET_KEY: ""
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+      AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: "true"
       _AIRFLOW_WWW_USER_USERNAME: airflow
       _AIRFLOW_WWW_USER_PASSWORD: airflow
       _AIRFLOW_DB_UPGRADE: "true"
       _AIRFLOW_WWW_USER_CREATE: "true"
+      AIRFLOW_CONN_MYSQL_DATA: mysql://airflow_user:airflow_pass@mysql:3306/airflow_data
+      _PIP_ADDITIONAL_REQUIREMENTS: "apache-airflow-providers-mysql pymysql pandas numpy scikit-learn joblib"
     volumes:
-      - airflow-dags:/opt/airflow/dags
+      - ./dags:/opt/airflow/dags
       - airflow-logs:/opt/airflow/logs
       - airflow-plugins:/opt/airflow/plugins
     user: "50000:0"
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
     command: airflow version
     restart: "no"
 
   airflow-webserver:
     image: apache/airflow:2.6.0
-    container_name: data-p2-airflow-webserver
+    container_name: airflow-webserver
     environment:
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__EXECUTOR: CeleryExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres/airflow
+      AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
       AIRFLOW__CORE__FERNET_KEY: ""
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+      AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: "true"
+      AIRFLOW_CONN_MYSQL_DATA: mysql://airflow_user:airflow_pass@mysql:3306/airflow_data
+      _PIP_ADDITIONAL_REQUIREMENTS: "apache-airflow-providers-mysql pymysql pandas numpy scikit-learn joblib"
     ports:
       - "8080:8080"
     volumes:
-      - airflow-dags:/opt/airflow/dags
+      - ./dags:/opt/airflow/dags
       - airflow-logs:/opt/airflow/logs
       - airflow-plugins:/opt/airflow/plugins
     user: "50000:0"
     depends_on:
       airflow-init:
         condition: service_completed_successfully
+      api-data:
+        condition: service_started
     command: webserver
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
@@ -117,27 +178,126 @@ services:
 
   airflow-scheduler:
     image: apache/airflow:2.6.0
-    container_name: data-p2-airflow-scheduler
+    container_name: airflow-scheduler
     environment:
-      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__CORE__EXECUTOR: CeleryExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres/airflow
+      AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
       AIRFLOW__CORE__FERNET_KEY: ""
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+      AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: "true"
+      AIRFLOW_CONN_MYSQL_DATA: mysql://airflow_user:airflow_pass@mysql:3306/airflow_data
+      _PIP_ADDITIONAL_REQUIREMENTS: "apache-airflow-providers-mysql pymysql pandas numpy scikit-learn joblib"
     volumes:
-      - airflow-dags:/opt/airflow/dags
+      - ./dags:/opt/airflow/dags
       - airflow-logs:/opt/airflow/logs
       - airflow-plugins:/opt/airflow/plugins
     user: "50000:0"
     depends_on:
       airflow-init:
         condition: service_completed_successfully
+      api-data:
+        condition: service_started
     command: scheduler
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8974/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  airflow-worker:
+    image: apache/airflow:2.6.0
+    container_name: airflow-worker
+    environment:
+      AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres/airflow
+      AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
+      AIRFLOW__CORE__FERNET_KEY: ""
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW_CONN_MYSQL_DATA: mysql://airflow_user:airflow_pass@mysql:3306/airflow_data
+      DUMB_INIT_SETSID: "0"
+      _PIP_ADDITIONAL_REQUIREMENTS: "apache-airflow-providers-mysql pymysql pandas numpy scikit-learn joblib"
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - airflow-logs:/opt/airflow/logs
+      - airflow-plugins:/opt/airflow/plugins
+    user: "50000:0"
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    command: celery worker
+    healthcheck:
+      test:
+        - "CMD-SHELL"
+        - 'celery --app airflow.executors.celery_executor.app inspect ping -d "celery@$${HOSTNAME}"'
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  airflow-triggerer:
+    image: apache/airflow:2.6.0
+    container_name: airflow-triggerer
+    environment:
+      AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres/airflow
+      AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
+      AIRFLOW__CORE__FERNET_KEY: ""
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW_CONN_MYSQL_DATA: mysql://airflow_user:airflow_pass@mysql:3306/airflow_data
+      _PIP_ADDITIONAL_REQUIREMENTS: "apache-airflow-providers-mysql pymysql pandas numpy scikit-learn joblib"
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - airflow-logs:/opt/airflow/logs
+      - airflow-plugins:/opt/airflow/plugins
+    user: "50000:0"
+    depends_on:
+      airflow-init:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    command: triggerer
+    healthcheck:
+      test: ["CMD-SHELL", 'airflow jobs check --job-type TriggererJob --hostname "$${HOSTNAME}"']
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  api-data:
+    build:
+      context: ../API-Data P2
+      dockerfile: ../Docker/dataApi.Dockerfile
+    image: data-p2-api:latest
+    pull_policy: never
+    container_name: api-data-p2
+    ports:
+      - "8988:80"
+    volumes:
+      - ../API-Data P2/data:/app/data
     restart: unless-stopped
 
   api-model:
     build:
       context: ../API-Model
-      dockerfile: Docker/Dockerfile
+      dockerfile: ../Docker/dataApi.Dockerfile
     image: api-model:latest
     pull_policy: never
     container_name: api-model
@@ -159,7 +319,7 @@ services:
       dockerfile: jupyter.Dockerfile
     image: data-p2-jupyter:latest
     pull_policy: never
-    container_name: data-p2-jupyter
+    container_name: jupyter
     ports:
       - "8888:8888"
     environment:
@@ -172,12 +332,12 @@ services:
       minio-init:
         condition: service_completed_successfully
     volumes:
-      - ../Data P2:/home/jovyan/work
+      - ../Jupyter:/home/jovyan/work
     restart: unless-stopped
 
 volumes:
   postgres-db-volume:
+  mysql-db-volume:
   minio-data:
-  airflow-dags:
   airflow-logs:
   airflow-plugins:
