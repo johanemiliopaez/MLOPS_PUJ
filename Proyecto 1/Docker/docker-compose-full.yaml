@@ -308,6 +308,8 @@ services:
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
       MINIO_BUCKET: models
+      MODEL_OBJECT: covertype_rf.pkl
+      MODEL_REFRESH_INTERVAL: "60"
     depends_on:
       minio-init:
         condition: service_completed_successfully

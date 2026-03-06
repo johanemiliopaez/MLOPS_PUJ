@@ -28,7 +28,7 @@ Entorno MLOps con Airflow (CeleryExecutor), MinIO, PostgreSQL, MySQL, Redis, Jup
 | **airflow-worker** | apache/airflow:2.6.0 | — | Ejecutor Celery (tareas en paralelo) |
 | **airflow-triggerer** | apache/airflow:2.6.0 | — | Triggers diferidos (DeferrableOperator) |
 | **api-data** | data-p2-api:latest (build) | 8988 | API de datos Forest Cover Type |
-| **api-model** | api-model:latest (build) | 8989 | API de modelos + MinIO |
+| **api-model** | api-model:latest (build) | 8989 | API Covertype (PKL desde MinIO, auto-refresh) |
 | **jupyter** | data-p2-jupyter:latest (build) | 8888 | Jupyter Lab |
 
 ## Bases de datos
