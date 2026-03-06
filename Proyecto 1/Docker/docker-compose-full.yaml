@@ -328,9 +328,16 @@ services:
       MINIO_ACCESS_KEY: minioadmin
       MINIO_SECRET_KEY: minioadmin
       MINIO_BUCKET: models
+      MYSQL_HOST: mysql
+      MYSQL_PORT: "3306"
+      MYSQL_USER: airflow_user
+      MYSQL_PASSWORD: airflow_pass
+      MYSQL_DATABASE: airflow_data
     depends_on:
       minio-init:
         condition: service_completed_successfully
+      mysql:
+        condition: service_healthy
     volumes:
       - ../Jupyter:/home/jovyan/work
     restart: unless-stopped
