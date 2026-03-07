@@ -16,7 +16,7 @@ API Data → Airflow DAG → MySQL (data_raw → data_prepared) → Jupyter (ent
 | `Docker/dags/` | DAGs de Airflow (ingestión, preparación, split) |
 | `Docker/mysql-init/` | Scripts SQL para `data_raw` y `data_prepared` |
 | `API-Data P2/` | API de datos Forest Cover Type (`/data`, `/restart_data_generation`) |
-| `API-Model/` | API de predicciones Covertype (PKL desde MinIO) |
+| `API-Model/` | API de predicciones Covertype (PKL desde MinIO) + `Test.py` |
 | `Jupyter/` | Notebooks de entrenamiento (`covertype.ipynb`) |
 
 ## Servicios (Docker Compose)
@@ -91,9 +91,11 @@ Entrena RandomForestClassifier y sube el modelo a MinIO.
 
 1. Carga datos desde MySQL (`data_prepared` por `data_type`)
 2. Entrena RandomForestClassifier
-3. Guarda PKL (`covertype_rf.pkl`) en MinIO bucket `models`
+3. Guarda PKL con modelo + encoders (`covertype_rf.pkl`) en MinIO bucket `models`
 
 **Ubicación:** `Jupyter/covertype.ipynb`
+
+**Nota:** Jupyter y API-Model usan scikit-learn 1.3.x para compatibilidad del PKL.
 
 ## API Model: predicciones
 
@@ -131,9 +133,20 @@ curl -X POST http://localhost:8989/predict \
   }'
 ```
 
-**Respuesta:** `{"predictions": [1]}` (Cover Type 1-7)
+**Respuesta:** `{"predictions": [0]}` (Cover Type 0-6)
+
+**Clases Cover Type:** 0=Spruce/Fir, 1=Lodgepole Pine, 2=Ponderosa Pine, 3=Cottonwood/Willow, 4=Aspen, 5=Douglas-fir, 6=Krummholz
 
 **Documentación:** http://localhost:8989/docs
+
+### Test: 100 requests
+
+```bash
+cd "Proyecto 1/API-Model"
+python Test.py
+```
+
+Ejecuta 100 requests aleatorios al endpoint `/predict` y muestra un resumen con: total exitosos/errores, distribución de predicciones por nombre, y latencias (min/max/avg).
 
 ## Credenciales
 
@@ -179,3 +192,4 @@ docker compose -f docker-compose-full.yaml down
 2. Ejecutar el DAG en Airflow (para llenar `data_prepared`)
 3. Ejecutar `covertype.ipynb` en Jupyter (entrenar y subir PKL a MinIO)
 4. Consumir la API en http://localhost:8989/predict
+5. Probar con `python API-Model/Test.py` (100 requests)
