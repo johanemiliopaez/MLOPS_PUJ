@@ -177,6 +177,7 @@ services:
       MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-password123}
       MINIO_BUCKET_MODELOS: ${MINIO_BUCKET_MODELOS:-modelos}
       MINIO_BUCKET_ARTEFACTOS: ${MINIO_BUCKET_ARTEFACTOS:-artefactos}
+      MODEL_REFRESH_INTERVAL: ${MODEL_REFRESH_INTERVAL:-60}
     networks:
       - ml_network
     depends_on:
