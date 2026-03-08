@@ -1,3 +1,4 @@
+import os
 from airflow.decorators import dag, task
 from datetime import datetime
 import pandas as pd
@@ -8,9 +9,26 @@ import pickle
 import io
 from sklearn.model_selection import train_test_split
 
-MYSQL_CONN = "mysql+pymysql://ml_user:ml_password@mysql:3306/ml_data"
-MINIO_CLIENT = Minio("minio:9000", access_key="admin", secret_key="password123", secure=False)
-BUCKET_ARTEFACTOS = "artefactos"
+# Configuración desde variables de entorno
+MYSQL_HOST = os.environ.get("MYSQL_HOST", "mysql")
+MYSQL_PORT = os.environ.get("MYSQL_PORT", "3306")
+MYSQL_USER = os.environ.get("MYSQL_USER", "ml_user")
+MYSQL_PASSWORD = os.environ.get("MYSQL_PASSWORD", "ml_password")
+MYSQL_DATABASE = os.environ.get("MYSQL_DATABASE", "ml_data")
+MINIO_HOST = os.environ.get("MINIO_HOST", "minio")
+MINIO_PORT = os.environ.get("MINIO_PORT", "9000")
+MINIO_ACCESS_KEY = os.environ.get("MINIO_ACCESS_KEY", "admin")
+MINIO_SECRET_KEY = os.environ.get("MINIO_SECRET_KEY", "password123")
+BUCKET_ARTEFACTOS = os.environ.get("MINIO_BUCKET_ARTEFACTOS", "artefactos")
+API_DATOS_URL = os.environ.get("API_DATOS_URL", "http://api_datos:80")
+
+MYSQL_CONN = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DATABASE}"
+MINIO_CLIENT = Minio(
+    f"{MINIO_HOST}:{MINIO_PORT}",
+    access_key=MINIO_ACCESS_KEY,
+    secret_key=MINIO_SECRET_KEY,
+    secure=False,
+)
 ARCHIVO_MAPEO = "mapeo_variables.pkl"
 
 COLUMNAS_API = [
@@ -27,7 +45,7 @@ def etl_ml_pipeline():
     def extraer_api_a_raw():
         engine = create_engine(MYSQL_CONN)
         # Petición a la API en la red aislada (usando el nombre del contenedor 'api_datos' en el puerto 80)
-        url = "http://api_datos:80/data?group_number=1" 
+        url = f"{API_DATOS_URL.rstrip('/')}/data?group_number=1" 
         try:
             response = requests.get(url)
             if response.status_code == 200:

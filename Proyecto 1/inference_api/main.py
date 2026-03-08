@@ -1,3 +1,4 @@
+import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
@@ -6,8 +7,21 @@ from minio import Minio
 import pandas as pd
 import pickle
 
+# Configuración desde variables de entorno
+MINIO_HOST = os.environ.get("MINIO_HOST", "minio")
+MINIO_PORT = os.environ.get("MINIO_PORT", "9000")
+MINIO_ACCESS_KEY = os.environ.get("MINIO_ACCESS_KEY", "admin")
+MINIO_SECRET_KEY = os.environ.get("MINIO_SECRET_KEY", "password123")
+MINIO_BUCKET_MODELOS = os.environ.get("MINIO_BUCKET_MODELOS", "modelos")
+MINIO_BUCKET_ARTEFACTOS = os.environ.get("MINIO_BUCKET_ARTEFACTOS", "artefactos")
+
 model_cache = {}
-minio_client = Minio("minio:9000", access_key="admin", secret_key="password123", secure=False)
+minio_client = Minio(
+    f"{MINIO_HOST}:{MINIO_PORT}",
+    access_key=MINIO_ACCESS_KEY,
+    secret_key=MINIO_SECRET_KEY,
+    secure=False,
+)
 
 COLUMNAS_MODELO = [
     "Elevation", "Aspect", "Slope", "Horizontal_Distance_To_Hydrology",
@@ -30,8 +44,8 @@ def load_from_minio(bucket, filename):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     print("Iniciando API: Descargando modelo y mapeo de variables...")
-    model_cache["modelo"] = load_from_minio("modelos", "modelo_rf.pkl")
-    model_cache["mapeo"] = load_from_minio("artefactos", "mapeo_variables.pkl")
+    model_cache["modelo"] = load_from_minio(MINIO_BUCKET_MODELOS, "modelo_rf.pkl")
+    model_cache["mapeo"] = load_from_minio(MINIO_BUCKET_ARTEFACTOS, "mapeo_variables.pkl")
     yield
     model_cache.clear()
 
@@ -94,8 +108,8 @@ def predict(data: ModelInput):
 
 @app.post("/reload")
 def reload():
-    model_cache["modelo"] = load_from_minio("modelos", "modelo_rf.pkl")
-    model_cache["mapeo"] = load_from_minio("artefactos", "mapeo_variables.pkl")
+    model_cache["modelo"] = load_from_minio(MINIO_BUCKET_MODELOS, "modelo_rf.pkl")
+    model_cache["mapeo"] = load_from_minio(MINIO_BUCKET_ARTEFACTOS, "mapeo_variables.pkl")
     
     if model_cache["modelo"] and model_cache["mapeo"]: 
         return {"status": "Modelo y Mapeo recargados exitosamente"}

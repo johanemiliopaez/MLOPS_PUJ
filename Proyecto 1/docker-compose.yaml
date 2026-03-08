@@ -1,3 +1,6 @@
+# Variables de entorno: usar .env o .env.example como referencia.
+# docker compose lee .env automáticamente si existe.
+
 networks:
   data_network:
     driver: bridge
@@ -28,13 +31,27 @@ services:
     command: standalone
     ports:
       - "8081:8080"
+    env_file:
+      - path: .env
+        required: false
     environment:
       - AIRFLOW__CORE__EXECUTOR=SequentialExecutor
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=sqlite:////opt/airflow/airflow.db
       - _AIRFLOW_DB_MIGRATE=True
       - _AIRFLOW_WWW_USER_CREATE=True
-      - _AIRFLOW_WWW_USER_USERNAME=admin
-      - _AIRFLOW_WWW_USER_PASSWORD=admin
+      - _AIRFLOW_WWW_USER_USERNAME=${AIRFLOW_USERNAME:-admin}
+      - _AIRFLOW_WWW_USER_PASSWORD=${AIRFLOW_PASSWORD:-admin}
+      - MYSQL_HOST=${MYSQL_HOST:-mysql}
+      - MYSQL_PORT=${MYSQL_PORT:-3306}
+      - MYSQL_USER=${MYSQL_USER:-ml_user}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD:-ml_password}
+      - MYSQL_DATABASE=${MYSQL_DATABASE:-ml_data}
+      - MINIO_HOST=${MINIO_HOST:-minio}
+      - MINIO_PORT=${MINIO_PORT:-9000}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-admin}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-password123}
+      - MINIO_BUCKET_ARTEFACTOS=${MINIO_BUCKET_ARTEFACTOS:-artefactos}
+      - API_DATOS_URL=${API_DATOS_URL:-http://api_datos:80}
     volumes:
       - ./airflow/dags:/opt/airflow/dags
     networks:
@@ -51,11 +68,14 @@ services:
     container_name: mysql_db
     ports:
       - "3306:3306"
+    env_file:
+      - path: .env
+        required: false
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: ml_data
-      MYSQL_USER: ml_user
-      MYSQL_PASSWORD: ml_password
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-ml_data}
+      MYSQL_USER: ${MYSQL_USER:-ml_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-ml_password}
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
@@ -68,9 +88,12 @@ services:
     ports:
       - "9000:9000"
       - "9001:9001"
+    env_file:
+      - path: .env
+        required: false
     environment:
-      MINIO_ROOT_USER: admin
-      MINIO_ROOT_PASSWORD: password123
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-admin}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-password123}
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
@@ -83,9 +106,22 @@ services:
     container_name: jupyter_lab
     ports:
       - "8888:8888"
+    env_file:
+      - path: .env
+        required: false
     environment:
       JUPYTER_ENABLE_LAB: "yes"
-      JUPYTER_TOKEN: "jupyter"
+      JUPYTER_TOKEN: ${JUPYTER_TOKEN:-jupyter}
+      MYSQL_HOST: ${MYSQL_HOST:-mysql}
+      MYSQL_PORT: ${MYSQL_PORT:-3306}
+      MYSQL_USER: ${MYSQL_USER:-ml_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-ml_password}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-ml_data}
+      MINIO_HOST: ${MINIO_HOST:-minio}
+      MINIO_PORT: ${MINIO_PORT:-9000}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-admin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-password123}
+      MINIO_BUCKET_MODELOS: ${MINIO_BUCKET_MODELOS:-modelos}
     volumes:
       - jupyter_data:/home/jovyan/work
     networks:
@@ -100,6 +136,16 @@ services:
     container_name: fastapi_inferencia
     ports:
       - "8000:8000"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      MINIO_HOST: ${MINIO_HOST:-minio}
+      MINIO_PORT: ${MINIO_PORT:-9000}
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-admin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-password123}
+      MINIO_BUCKET_MODELOS: ${MINIO_BUCKET_MODELOS:-modelos}
+      MINIO_BUCKET_ARTEFACTOS: ${MINIO_BUCKET_ARTEFACTOS:-artefactos}
     networks:
       - ml_network
     depends_on:

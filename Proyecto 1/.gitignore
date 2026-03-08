@@ -1,0 +1,2 @@
+# Variables de entorno (pueden contener credenciales)
+.env

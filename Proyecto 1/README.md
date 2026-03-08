@@ -70,6 +70,19 @@ JSON
   ]
 }
 
+# Configuración por Variables de Entorno
+
+El proyecto usa variables de entorno para MySQL, MinIO, Airflow y Jupyter. Valores por defecto funcionan sin configuración adicional.
+
+Para personalizar (ej. otro host, credenciales):
+
+```bash
+cp .env.example .env
+# Editar .env con tus valores
+```
+
+Variables principales: `MYSQL_HOST`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MINIO_HOST`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `JUPYTER_TOKEN` y `AIRFLOW_USERNAME`/`AIRFLOW_PASSWORD`.
+
 # Guía de Ejecución y Pruebas (Paso a Paso)
 ## 1. Despliegue de la Infraestructura
 
@@ -94,11 +107,9 @@ docker compose up -d --build
 
 ## 4. Entrenar el Modelo (JupyterLab)
 
-    El usuario obtiene el token de acceso ejecutando: docker logs jupyter_lab
+    Ingresa a: http://localhost:8888 (Token: `jupyter` o el valor de `JUPYTER_TOKEN`).
 
-    Ingresa a: http://localhost:8888 y abre un nuevo Notebook.
-
-    Se conecta a MySQL (mysql+pymysql://ml_user:ml_password@mysql:3306/ml_data), extrae tabla_train, entrena el modelo (RandomForest) y lo guarda en el bucket modelos de MinIO.
+    Abre `Prueba.ipynb` y ejecuta todas las celdas. Se conecta a MySQL y MinIO usando las variables de entorno configuradas.
 
 ## 5. Consumir el Modelo en Producción (API de Inferencia)
 
