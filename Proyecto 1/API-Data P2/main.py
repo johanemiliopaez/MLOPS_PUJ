@@ -110,7 +110,8 @@ async def root():
 
 # Cargar los datos del archivo CSV
 data = []
-with open('data/covertype.csv', newline='') as csvfile:
+_csv_path = os.path.join(os.path.dirname(__file__), "data", "covertype.csv")
+with open(_csv_path, newline='', encoding='utf-8') as csvfile:
     reader = csv.reader(csvfile)
     next(reader, None)
     for row in reader:
@@ -127,8 +128,9 @@ def get_batch_data(batch_number:int, batch_size:int=batch_size):
     return random_data
 
 # Cargar información previa si existe
-if os.path.isfile('data/timestamps.json'):
-    with open('data/timestamps.json', "r") as f:
+_timestamps_path = os.path.join(os.path.dirname(__file__), "data", "timestamps.json")
+if os.path.isfile(_timestamps_path):
+    with open(_timestamps_path, "r", encoding='utf-8') as f:
         timestamps = json.load(f)
         
 else:
@@ -200,9 +202,9 @@ async def read_data(
     # Mapear group_number (1-10) a batch index (0-9)
     batch_index = (group_number - 1) % 10
     random_data = get_batch_data(batch_index)
-    with open('data/timestamps.json', 'w') as file:
+    with open(_timestamps_path, 'w', encoding='utf-8') as file:
         file.write(json.dumps(timestamps))
-    
+
     return {"group_number": group_number, "batch_number": timestamps[str(group_number)][1], "data": random_data}
 
 @app.get(
@@ -225,6 +227,6 @@ async def restart_data(
 
     timestamps[str(group_number)][0] = 0
     timestamps[str(group_number)][1] = -1
-    with open('/data/timestamps.json', 'w') as file:
+    with open(_timestamps_path, 'w', encoding='utf-8') as file:
         file.write(json.dumps(timestamps))
     return {'ok'}
