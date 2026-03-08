@@ -19,6 +19,11 @@ services:
     container_name: fastapi_datos
     ports:
       - "8080:80"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      RESET_COUNTER_ON_STARTUP: ${RESET_COUNTER_ON_STARTUP:-true}
     volumes:
       - ./data_api/data:/data
     networks:

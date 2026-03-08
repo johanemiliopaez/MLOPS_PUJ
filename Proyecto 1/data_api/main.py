@@ -127,13 +127,18 @@ def get_batch_data(batch_number:int, batch_size:int=batch_size):
     return random_data
 
 # Cargar información previa si existe
-if os.path.isfile('/data/timestamps.json'):
+RESET_COUNTER_ON_STARTUP = os.environ.get("RESET_COUNTER_ON_STARTUP", "false").lower() in ("true", "1", "yes")
+
+if os.path.isfile('/data/timestamps.json') and not RESET_COUNTER_ON_STARTUP:
     with open('/data/timestamps.json', "r") as f:
         timestamps = json.load(f)
-        
 else:
     # Definir el diccionario para almacenar los timestamps de cada grupo e incializar el conteo, inicia en -1 para no agregar logica adicional de conteo
-    timestamps = {str(group_number): [0, -1] for group_number in range(1, 11)} # el valor está definido como [timestamp, batch]
+    timestamps = {str(group_number): [0, -1] for group_number in range(1, 11)}  # [timestamp, batch]
+    if RESET_COUNTER_ON_STARTUP:
+        with open('/data/timestamps.json', 'w') as f:
+            f.write(json.dumps(timestamps))
+        print("Contador reiniciado al arrancar (RESET_COUNTER_ON_STARTUP=true)")
 
 # Definir la ruta de la API
 @app.get(
