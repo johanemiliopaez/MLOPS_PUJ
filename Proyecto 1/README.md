@@ -1,195 +1,134 @@
-# Proyecto 1 - MLOps
+# End-to-End MLOps Pipeline: Del Dato a Producción
 
-Entorno MLOps con Airflow (CeleryExecutor), MinIO, PostgreSQL, MySQL, Redis, Jupyter y APIs FastAPI para datos y modelos Forest Cover Type.
+Este proyecto implementa una arquitectura completa de Machine Learning Operations (MLOps) utilizando contenedores Docker. Simula un entorno empresarial real donde la ingesta de datos está aislada en su propia red y un orquestador ETL extrae, procesa y sirve los datos a un entorno de experimentación y producción.
 
-## Flujo del pipeline
+## Arquitectura del Sistema
 
-```
-API Data → Airflow DAG → MySQL (data_raw → data_prepared) → Jupyter (entrenamiento) → MinIO (PKL) → API Model (predicciones)
-```
+El proyecto está compuesto por 6 bloques principales distribuidos en dos redes Docker aisladas (`data_network` y `ml_network`):
 
-## Estructura
+1. **API de Datos (Fuente Externa):** Simula un proveedor de datos externo. Entrega lotes (batches) de información cada 5 minutos. Vive aislada en la `data_network`.
+2. **Apache Airflow (ETL Pipeline):** Actúa como el puente autorizado entre ambas redes. Extrae los datos crudos, los limpia, imputa nulos, codifica variables categóricas (manteniendo el contexto histórico) y divide el dataset en Train/Test.
+3. **MySQL (Almacén Relacional):** Guarda las tablas intermedias (`tabla_raw`, `tabla_clean`) y las tablas finales listas para entrenamiento (`tabla_train`, `tabla_test`).
+4. **MinIO (Object Storage & Model Registry):** Almacena el diccionario de mapeo de variables categóricas generado por Airflow y sirve como repositorio para los modelos serializados (`.pkl`) entrenados.
+5. **JupyterLab (Entorno de Experimentación):** Opera conectado directamente a MySQL y MinIO. Es utilizado para entrenar modelos sin requerir tareas de limpieza de datos en esta etapa.
+6. **FastAPI (API de Inferencia en Producción):** Descarga el modelo ganador y el diccionario de mapeo desde MinIO. Traduce los datos crudos del usuario a formato matemático y expone un endpoint REST resiliente para predicciones en tiempo real.
 
-| Carpeta | Descripción |
-|---------|-------------|
-| `Docker/` | Docker Compose con todos los servicios |
-| `Docker/dags/` | DAGs de Airflow (ingestión, preparación, split) |
-| `Docker/mysql-init/` | Scripts SQL para `data_raw` y `data_prepared` |
-| `API-Data P2/` | API de datos Forest Cover Type (`/data`, `/restart_data_generation`) |
-| `API-Model/` | API de predicciones Covertype (PKL desde MinIO) + `Test.py` |
-| `Jupyter/` | Notebooks de entrenamiento (`covertype.ipynb`) |
+## Estructura del Proyecto
 
-## Servicios (Docker Compose)
+proyecto_mlops/
+├── docker-compose.yml
+├── data_api/
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   ├── main.py
+│   └── data/
+│       └── covertype.csv
+├── airflow/
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   └── dags/
+│       └── pipeline_datos.py
+├── jupyter/
+│   └── Dockerfile
+└── inference_api/
+    ├── Dockerfile
+    ├── requirements.txt
+    └── main.py
 
-| Servicio | Imagen | Puerto | Función |
-|----------|--------|--------|---------|
-| **postgres** | postgres:13 | — | Metadata de Airflow |
-| **redis** | redis:latest | 6379 (interno) | Broker de Celery |
-| **mysql** | mysql:8.0 | 3306 | `data_raw`, `data_prepared` |
-| **minio** | minio/minio:latest | 9000, 9001 | Bucket `models` (PKL) |
-| **minio-init** | minio/mc:latest | — | Crea bucket `models` |
-| **airflow-init** | apache/airflow:2.6.0 | — | Inicializa Airflow |
-| **airflow-webserver** | apache/airflow:2.6.0 | 8080 | UI de Airflow |
-| **airflow-scheduler** | apache/airflow:2.6.0 | — | Planificador |
-| **airflow-worker** | apache/airflow:2.6.0 | — | Celery worker |
-| **airflow-triggerer** | apache/airflow:2.6.0 | — | Triggerer |
-| **api-data** | data-p2-api:latest | 8988 | API datos Forest Cover |
-| **api-model** | api-model:latest | 8989 | API predicciones (PKL MinIO, auto-refresh) |
-| **jupyter** | data-p2-jupyter:latest | 8888 | Jupyter Lab |
+# Detalle del Bloque de Inferencia (FastAPI)
 
-## Bases de datos
+El bloque de inferencia está diseñado para operar en condiciones del mundo real, donde el sistema cliente envía datos en su formato original (textos y números mezclados) y, en ocasiones, envía categorías que el modelo nunca procesó durante su entrenamiento (Out-of-Vocabulary).
+Funcionamiento Interno
 
-| Base de datos | Uso |
-|---------------|-----|
-| **PostgreSQL** | Metadata de Airflow (usuario: `airflow`) |
-| **MySQL** | `data_raw`, `data_prepared` (usuario: `airflow_user`, DB: `airflow_data`) |
+    Doble Carga en Frío: Al iniciar (lifespan), la API se conecta a MinIO y descarga dos artefactos: el modelo predictivo (modelo_rf.pkl) y el diccionario de memoria de Airflow (mapeo_variables.pkl).
 
-## Inicio rápido
+    Traducción al Vuelo: Cuando llega una petición, la API revisa las 12 características. Si detecta texto (ej. "Rawah"), consulta el diccionario de MinIO y lo traduce a su código numérico correspondiente (ej. 0), ensamblando un pd.DataFrame estructurado idéntico al utilizado en el entrenamiento.
 
-```bash
-cd "Proyecto 1/Docker"
-docker compose -f docker-compose-full.yaml up -d --build
-```
+    Resiliencia ante Datos Desconocidos: Si el usuario envía un dato categórico nuevo (ej. "C7744") que no existe en la memoria de MinIO, la API no interrumpe el proceso ni rechaza la petición. Asigna un valor numérico genérico (-1) para que el modelo matemático pueda procesarlo, y añade una advertencia al payload de respuesta.
 
-## DAG: data_ingestion_preparation
+# Qué espera recibir el sistema (Input)
 
-Automatiza ingestión, preparación y split de datos Forest Cover Type.
+Un objeto JSON con la clave features, que contiene una lista de exactamente 12 elementos (puede ser una mezcla de enteros, flotantes y strings).
+JSON
 
-| Parámetro | Valor |
-|-----------|-------|
-| **Schedule** | Cada 5 minutos |
-| **Archivo** | `Docker/dags/data_ingestion_dag.py` |
+{
+  "features": [
+    "2596", "51", "3", "258", "0", "510", "221", "232", "148", "6279", 
+    "Rawah", "C7744"
+  ]
+}
 
-### Flujo
+# Qué entrega el sistema (Output)
 
-```
-extract_data_from_api → load_data → clean_data → transform_data → validate_data → feature_engineering → split → store_prepared_data
-```
+La API responde con un HTTP 200 y un JSON que contiene la predicción final (cover_type_prediccion como número entero). Si el sistema detecta valores fuera de vocabulario, incluye un arreglo opcional llamado advertencias.
+JSON
 
-### Tareas
+{
+  "cover_type_prediccion": 1,
+  "advertencias": [
+    "Valor 'C7744' no reconocido en la columna 'Soil_Type'. Se asignó el valor genérico (-1)."
+  ]
+}
 
-| # | Task | Descripción |
-|---|------|-------------|
-| 1 | extract_data_from_api | Consulta API con `group_number=1` |
-| 2 | load_data | Inserta en `data_raw` |
-| 3 | clean_data | Limpieza de datos |
-| 4 | transform_data | Estandarización z-score |
-| 5 | validate_data | Validación |
-| 6 | feature_engineering | Passthrough |
-| 7 | split | 80% train / 20% test (`data_type`) |
-| 8 | store_prepared_data | Inserta en `data_prepared` |
+# Guía de Ejecución y Pruebas (Paso a Paso)
+## 1. Despliegue de la Infraestructura
 
-### Ejecutar el DAG
+El usuario debe ubicarse en la raíz del proyecto y ejecutar:
+Bash
 
-1. http://localhost:8080 (usuario: `airflow`, contraseña: `airflow`)
-2. Activar DAG **data_ingestion_preparation**
-3. Trigger manual: clic en DAG → **Trigger DAG** (▶️)
+docker compose up -d --build
 
-## Jupyter: covertype.ipynb
+## 2. Probar la Extracción (API de Datos)
 
-Entrena RandomForestClassifier y sube el modelo a MinIO.
+    El usuario ingresa a: http://localhost:8080/docs
 
-1. Carga datos desde MySQL (`data_prepared` por `data_type`)
-2. Entrena RandomForestClassifier
-3. Guarda PKL con modelo + encoders (`covertype_rf.pkl`) en MinIO bucket `models`
+    Ejecuta el endpoint GET /data (parámetro group_number=1).
 
-**Ubicación:** `Jupyter/covertype.ipynb`
+## 3. Ejecutar el Pipeline ETL (Airflow)
 
-**Nota:** Jupyter y API-Model usan scikit-learn 1.3.x para compatibilidad del PKL.
+    El usuario ingresa a: http://localhost:8081 (Credenciales: admin / admin).
 
-## API Model: predicciones
+    Enciende el DAG etl_ml_pipeline y presiona Trigger DAG (botón de "Play").
 
-API que carga el PKL desde MinIO y sirve predicciones. Se actualiza automáticamente cuando el PKL cambia en MinIO.
+    Verificación: En MinIO (http://localhost:9001) el usuario visualiza el bucket artefactos con el archivo mapeo_variables.pkl.
 
-### Endpoints
+## 4. Entrenar el Modelo (JupyterLab)
 
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| GET | `/` | Estado del modelo |
-| GET | `/health` | Health check |
-| POST | `/predict` | Predicciones |
-| POST | `/refresh` | Recarga modelo desde MinIO |
+    El usuario obtiene el token de acceso ejecutando: docker logs jupyter_lab
 
-### Consumir `/predict`
+    Ingresa a: http://localhost:8888 y abre un nuevo Notebook.
 
-```bash
-curl -X POST http://localhost:8989/predict \
-  -H "Content-Type: application/json" \
-  -d '{
-    "instances": [{
-      "elevation": 2596,
-      "aspect": 51,
-      "slope": 3,
-      "horizontal_distance_to_hydrology": 258,
-      "vertical_distance_to_hydrology": 0,
-      "horizontal_distance_to_roadways": 510,
-      "hillshade_9am": 221,
-      "hillshade_noon": 232,
-      "hillshade_3pm": 148,
-      "horizontal_distance_to_fire_points": 6279,
-      "wilderness_area": "Rawah",
-      "soil_type": "C7744"
-    }]
-  }'
-```
+    Se conecta a MySQL (mysql+pymysql://ml_user:ml_password@mysql:3306/ml_data), extrae tabla_train, entrena el modelo (RandomForest) y lo guarda en el bucket modelos de MinIO.
 
-**Respuesta:** `{"predictions": [0]}` (Cover Type 0-6)
+## 5. Consumir el Modelo en Producción (API de Inferencia)
 
-**Clases Cover Type:** 0=Spruce/Fir, 1=Lodgepole Pine, 2=Ponderosa Pine, 3=Cottonwood/Willow, 4=Aspen, 5=Douglas-fir, 6=Krummholz
+    El usuario ingresa a: http://localhost:8000/docs
 
-**Documentación:** http://localhost:8989/docs
+    Ejecuta POST /reload para descargar el modelo y el mapeo.
 
-### Test: 100 requests
+    Ejecuta POST /predict enviando un payload de prueba.
 
-```bash
-cd "Proyecto 1/API-Model"
-python Test.py
-```
+# Retos Encontrados y Soluciones Implementadas
+1. Concurrencia en Base de Datos de Airflow
 
-Ejecuta 100 requests aleatorios al endpoint `/predict` y muestra un resumen con: total exitosos/errores, distribución de predicciones por nombre, y latencias (min/max/avg).
+    Problema: El contenedor de Airflow entraba en estado exited (cannot use SQLite with the LocalExecutor).
 
-## Credenciales
+    Solución: El proyecto modificó la variable a AIRFLOW__CORE__EXECUTOR=SequentialExecutor para permitir una ejecución lineal y estable de las tareas del DAG sin bloquear la base de datos interna.
 
-| Servicio | Usuario | Contraseña / Token |
-|----------|---------|---------------------|
-| PostgreSQL | `airflow` | `airflow` |
-| MySQL | `airflow_user` | `airflow_pass` |
-| MinIO | `minioadmin` | `minioadmin` |
-| Airflow | `airflow` | `airflow` |
-| Jupyter | — | Token: `jupyter` |
+2. Dependency Hell (Incompatibilidad de Versiones)
 
-## URLs
+    Problema: La API de inferencia arrojaba AttributeError: 'DecisionTreeClassifier' object has no attribute 'monotonic_cst'.
 
-| Servicio | URL |
-|----------|-----|
-| **Airflow** | http://localhost:8080 |
-| **API Data** | http://localhost:8988 |
-| **API Model** | http://localhost:8989 |
-| **API Model Docs** | http://localhost:8989/docs |
-| **MinIO Console** | http://localhost:9001 |
-| **Jupyter** | http://localhost:8888 |
+    Solución: El sistema implementó "Dependency Pinning". Fijó estrictamente scikit-learn==1.3.1 y pandas==2.2.0 tanto en el Dockerfile de Jupyter como en el requirements.txt de la API de inferencia para garantizar que el modelo serializado fuera compatible al 100%.
 
-## Comandos útiles
+3. Pérdida de Formato de Datos al Servir el Modelo
 
-```bash
-# Levantar todo
-docker compose -f docker-compose-full.yaml up -d --build
+    Problema: Scikit-Learn rechazaba las peticiones en inferencia por falta de nombres de columnas.
 
-# Actualizar solo api-model
-docker compose -f docker-compose-full.yaml up -d --build api-model
+    Solución: El desarrollador actualizó el endpoint /predict para que reconstruyera un pd.DataFrame al vuelo con las cabeceras originales (COLUMNAS_MODELO) antes de pasarlo al predictor.
 
-# Ver logs
-docker compose -f docker-compose-full.yaml logs -f
-docker compose -f docker-compose-full.yaml logs -f api-model
+4. Categorías "Out of Vocabulary" (Textos no vistos)
 
-# Detener
-docker compose -f docker-compose-full.yaml down
-```
+    Problema: Si el usuario enviaba un dato categórico (ej. ciudad o suelo) que no llegó en los lotes de extracción durante el entrenamiento, la API se interrumpía con un Error HTTP 500.
 
-## Orden de uso recomendado
-
-1. Levantar el stack
-2. Ejecutar el DAG en Airflow (para llenar `data_prepared`)
-3. Ejecutar `covertype.ipynb` en Jupyter (entrenar y subir PKL a MinIO)
-4. Consumir la API en http://localhost:8989/predict
-5. Probar con `python API-Model/Test.py` (100 requests)
+    Solución: El sistema integró la lógica de asignación a -1 documentada en la sección de "Funcionamiento Interno", garantizando una predicción "best-effort" ininterrumpida y visibilidad completa a través de advertencias en el JSON de respuesta
