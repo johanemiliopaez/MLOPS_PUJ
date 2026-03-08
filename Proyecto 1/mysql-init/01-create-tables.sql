@@ -1,4 +1,4 @@
--- Scripts de inicialización MySQL - PROYECTO-1-FULL-JP
+-- Scripts de inicialización MySQL - PROYECTO-1
 -- Define el esquema antes de que el DAG de Airflow ejecute.
 -- Garantiza tablas estables aunque el pipeline falle en las primeras ejecuciones.
 

@@ -58,9 +58,14 @@ services:
       - data_network
       - ml_network
     depends_on:
-      - api_datos
-      - mysql
-      - minio
+      api_datos:
+        condition: service_started
+      mysql:
+        condition: service_started
+      minio:
+        condition: service_started
+      minio-init:
+        condition: service_completed_successfully
 
   # === BLOQUE 3: MYSQL ===
   mysql:
@@ -101,6 +106,29 @@ services:
     networks:
       - ml_network
 
+  # === BLOQUE 4b: MINIO INIT (crea buckets modelos y artefactos) ===
+  minio-init:
+    image: minio/mc:latest
+    container_name: minio_init
+    depends_on:
+      - minio
+    environment:
+      MINIO_ACCESS_KEY: ${MINIO_ACCESS_KEY:-admin}
+      MINIO_SECRET_KEY: ${MINIO_SECRET_KEY:-password123}
+      MINIO_BUCKET_MODELOS: ${MINIO_BUCKET_MODELOS:-modelos}
+      MINIO_BUCKET_ARTEFACTOS: ${MINIO_BUCKET_ARTEFACTOS:-artefactos}
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      mc alias set myminio http://minio:9000 $$MINIO_ACCESS_KEY $$MINIO_SECRET_KEY;
+      mc mb myminio/$$MINIO_BUCKET_MODELOS --ignore-existing;
+      mc mb myminio/$$MINIO_BUCKET_ARTEFACTOS --ignore-existing;
+      exit 0;
+      "
+    restart: "no"
+    networks:
+      - ml_network
+
   # === BLOQUE 5: JUPYTERLAB ===
   jupyterlab:
     build: ./jupyter
@@ -128,8 +156,10 @@ services:
     networks:
       - ml_network
     depends_on:
-      - mysql
-      - minio
+      mysql:
+        condition: service_started
+      minio-init:
+        condition: service_completed_successfully
 
   # === BLOQUE 6: API INFERENCIA ===
   api_inferencia:
@@ -150,5 +180,6 @@ services:
     networks:
       - ml_network
     depends_on:
-      - minio
+      minio-init:
+        condition: service_completed_successfully
     restart: always
