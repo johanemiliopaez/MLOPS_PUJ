@@ -2,7 +2,6 @@
 
 Repositorio académico de MLOps que reúne los talleres prácticos de la materia MLOPS_PUJ
 
-### Flujo
 
 - **Taller 1 - Penguins:** pipeline de entrenamiento en Python, generación de modelos (`RF.pkl` y `LR.pkl`), API REST con FastAPI y despliegue en Docker.
 - **Taller 2 - Contenedores:** entorno con Docker Compose para ejecutar FastAPI + JupyterLab en paralelo, con volumen compartido para datos, código y artefactos.
