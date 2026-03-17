@@ -1,6 +1,6 @@
-# End-to-End MLOps Pipeline: Del Dato a Producción
+# Proyecto 1 End-to-End MLOps Pipeline
 
-Este proyecto implementa una arquitectura completa de Machine Learning Operations (MLOps) utilizando contenedores Docker. Simula un entorno empresarial real donde la ingesta de datos está aislada en su propia red y un orquestador ETL extrae, procesa y sirve los datos a un entorno de experimentación y producción.
+Este proyecto implementa una arquitectura completa de Machine Learning Operations (MLOps) utilizando contenedores Docker. Se configura  un entorno   donde la ingesta de datos está aislada en su propia red y un orquestador ETL extrae, procesa y sirve los datos a un entorno de experimentación.
 
 ## Arquitectura del Sistema
 
@@ -90,6 +90,9 @@ El usuario debe ubicarse en la raíz del proyecto y ejecutar:
 Bash
 
 docker compose up -d --build
+<p align="center">
+<img width="1491" height="628" alt="image" src="https://github.com/user-attachments/assets/d1bbe24c-3bd7-43a8-a787-67acf8548d18" />
+ </p>
 
 ## 2. Probar la Extracción (API de Datos)
 
