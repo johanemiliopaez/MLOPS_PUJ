@@ -9,9 +9,9 @@ El proyecto está compuesto por 6 bloques principales distribuidos en dos redes 
 1. **API de Datos (Fuente Externa):** Simula un proveedor de datos externo. Entrega lotes (batches) de información cada 5 minutos. Vive aislada en la `data_network`.
 2. **Apache Airflow (ETL Pipeline):** Actúa como el puente autorizado entre ambas redes. Extrae los datos crudos, los limpia, imputa nulos, codifica variables categóricas (manteniendo el contexto histórico) y divide el dataset en Train/Test.
 3. **MySQL (Almacén Relacional):** Guarda las tablas intermedias (`tabla_raw`, `tabla_clean`) y las tablas finales listas para entrenamiento (`tabla_train`, `tabla_test`).
-4. **MinIO (Object Storage & Model Registry):** Almacena el diccionario de mapeo de variables categóricas generado por Airflow y sirve como repositorio para los modelos serializados (`.pkl`) entrenados.
+4. **MinIO (Object Storage):** Repositorio para los modelos serializados (`.pkl`) entrenados.
 5. **JupyterLab (Entorno de Experimentación):** Opera conectado directamente a MySQL y MinIO. Es utilizado para entrenar modelos sin requerir tareas de limpieza de datos en esta etapa.
-6. **FastAPI (API de Inferencia en Producción):** Descarga el modelo ganador y el diccionario de mapeo desde MinIO. Traduce los datos crudos del usuario a formato matemático y expone un endpoint REST resiliente para predicciones en tiempo real.
+6. **FastAPI (API de Inferencia en Producción):** Descarga el modelo   desde MinIO. Traduce los datos crudos del usuario a formato matemático y expone un endpoint REST resiliente para predicciones en tiempo real.
 
 ## Estructura del Proyecto
 
@@ -70,18 +70,6 @@ JSON
   ]
 }
 
-# Configuración por Variables de Entorno
-
-El proyecto usa variables de entorno para MySQL, MinIO, Airflow y Jupyter. Valores por defecto funcionan sin configuración adicional.
-
-Para personalizar (ej. otro host, credenciales):
-
-```bash
-cp .env.example .env
-# Editar .env con tus valores
-```
-
-Variables principales: `MYSQL_HOST`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MINIO_HOST`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `JUPYTER_TOKEN` y `AIRFLOW_USERNAME`/`AIRFLOW_PASSWORD`.
 
 # Guía de Ejecución y Pruebas (Paso a Paso)
 ## 1. Despliegue de la Infraestructura
