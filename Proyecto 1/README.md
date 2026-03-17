@@ -96,6 +96,9 @@ docker compose up -d --build
     El usuario ingresa a: http://localhost:8080/docs
 
     Ejecuta el endpoint GET /data (parámetro group_number=1).
+    <p align="center">
+    <img width="631" height="569" alt="image" src="https://github.com/user-attachments/assets/b39ec1d1-ed01-4bc5-bb53-b64f3b960a7f" />
+    </p>
 
 ## 3. Ejecutar el Pipeline ETL (Airflow)
 
@@ -104,12 +107,18 @@ docker compose up -d --build
     Enciende el DAG etl_ml_pipeline y presiona Trigger DAG (botón de "Play").
 
     Verificación: En MinIO (http://localhost:9001) el usuario visualiza el bucket artefactos con el archivo mapeo_variables.pkl.
-
+<p align="center">
+<img width="1691" height="709" alt="image" src="https://github.com/user-attachments/assets/0acd0af8-4307-48d5-bada-8213117b6551" />
+</p>
 ## 4. Entrenar el Modelo (JupyterLab)
 
     Ingresa a: http://localhost:8888 (Token: `jupyter` o el valor de `JUPYTER_TOKEN`).
 
     Abre `Prueba.ipynb` y ejecuta todas las celdas. Se conecta a MySQL y MinIO usando las variables de entorno configuradas.
+<p align="center">
+<img width="1684" height="698" alt="image" src="https://github.com/user-attachments/assets/c3da2ffc-2b7b-489f-88ab-dd0747ef9d5a" />
+</p>
+    
 
 ## 5. Consumir el Modelo en Producción (API de Inferencia)
 
@@ -118,6 +127,14 @@ docker compose up -d --build
     Ejecuta POST /reload para descargar el modelo y el mapeo.
 
     Ejecuta POST /predict enviando un payload de prueba.
+<p align="center">
+<img width="1167" height="393" alt="image" src="https://github.com/user-attachments/assets/da7f1cef-a894-495e-b135-5e93a9d519a0" />
+
+<img width="648" height="446" alt="image" src="https://github.com/user-attachments/assets/e268c956-d445-447b-acbc-d8464be368b8" />
+</p>
+
+
+    
 
 # Retos Encontrados y Soluciones Implementadas
 1. Concurrencia en Base de Datos de Airflow
