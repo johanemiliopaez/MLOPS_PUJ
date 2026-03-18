@@ -48,8 +48,16 @@ class PredictRequest(BaseModel):
     features: List[Any]
 
 
+class PredictModelsRequest(BaseModel):
+    model_name: str  # PenguinsRF, PenguinsLR, PenguinsDT, PenguinsGB, PenguinsKNN, PenguinsSVM
+    features: List[Any]
+
+
 # Orden de features: bill_length_mm, bill_depth_mm, flipper_length_mm, body_mass_g, island_encoded, sex_encoded, year
 FEATURE_NAMES = ["bill_length_mm", "bill_depth_mm", "flipper_length_mm", "body_mass_g", "island_encoded", "sex_encoded", "year"]
+
+# Cache por modelo (para /predict/models)
+models_cache: dict = {}
 
 @app.get("/")
 def root():
@@ -58,6 +66,11 @@ def root():
         "model_loaded": model_cache is not None,
         "model_name": MODEL_NAME,
         "features": FEATURE_NAMES,
+        "endpoints": {
+            "predict": "POST /predict (modelo original)",
+            "predict_models": "POST /predict/models (elegir modelo)",
+            "models": "GET /models (lista modelos)",
+        },
     }
 
 
@@ -76,6 +89,48 @@ def predict(req: PredictRequest):
         return {"species_prediccion": species_map.get(int(pred[0]), int(pred[0]))}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/predict/models")
+def predict_models(req: PredictModelsRequest):
+    """Predicción usando el modelo indicado (PenguinsRF, PenguinsLR, PenguinsDT, PenguinsGB, PenguinsKNN, PenguinsSVM)."""
+    if len(req.features) != len(FEATURE_NAMES):
+        raise HTTPException(status_code=400, detail=f"Se esperan {len(FEATURE_NAMES)} features: {FEATURE_NAMES}")
+    model_name = req.model_name
+    if model_name not in models_cache:
+        try:
+            model_uri = f"models:/{model_name}/Production"
+            models_cache[model_name] = mlflow.sklearn.load_model(model_uri)
+        except Exception:
+            try:
+                model_uri = f"models:/{model_name}/latest"
+                models_cache[model_name] = mlflow.sklearn.load_model(model_uri)
+            except Exception as e:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Modelo '{model_name}' no encontrado. Entrena con entrenamiento_multimodelo.ipynb. Error: {e}"
+                )
+    try:
+        import numpy as np
+        X = np.array([req.features])
+        pred = models_cache[model_name].predict(X)
+        species_map = {0: "Adelie", 1: "Chinstrap", 2: "Gentoo"}
+        return {
+            "species_prediccion": species_map.get(int(pred[0]), int(pred[0])),
+            "model_name": model_name,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/models")
+def list_models():
+    """Lista modelos disponibles para /predict/models."""
+    return {
+        "models": ["PenguinsRF", "PenguinsLR", "PenguinsDT", "PenguinsGB", "PenguinsKNN", "PenguinsSVM"],
+        "default_predict": "Usa POST /predict para PenguinsRF (original)",
+        "models_predict": "Usa POST /predict/models con model_name para elegir modelo",
+    }
 
 
 @app.post("/reload")

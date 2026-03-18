@@ -41,17 +41,15 @@ docker compose up -d --build
 
 ## Flujo
 
-1. **JupyterLab**: Abrir `entrenamiento_mlflow.ipynb` y ejecutar todas las celdas.
-   - Carga datos desde PostgreSQL (o CSV si está vacío)
-   - Procesa y guarda en `data_procesada`
-   - Ejecuta 20+ experimentos con RandomForest (n_estimators, max_depth, min_samples_split)
-   - Registra en MLflow y promueve el mejor a Production
+1. **JupyterLab**:
+   - `entrenamiento_mlflow.ipynb`: 20+ experimentos con RandomForest → modelo PenguinsRF
+   - `entrenamiento_multimodelo.ipynb`: 6 técnicas (RF, LR, DT, GB, KNN, SVM) × 20 iteraciones cada una
 
-2. **API Inferencia**: `POST /predict` con 7 features en orden:
-```json
-{"features": [39.1, 18.7, 181, 3750, 0, 0, 2007]}
-```
-(bill_length_mm, bill_depth_mm, flipper_length_mm, body_mass_g, island_encoded, sex_encoded, year)
+2. **API Inferencia**:
+   - `POST /predict` – modelo original (PenguinsRF)
+   - `POST /predict/models` – elegir modelo: `{"model_name": "PenguinsLR", "features": [39.1, 18.7, 181, 3750, 0, 0, 2007]}`
+   - `GET /models` – lista modelos disponibles
+   - Modelos: PenguinsRF, PenguinsLR, PenguinsDT, PenguinsGB, PenguinsKNN, PenguinsSVM
 
 ## Formato de predicción
 
