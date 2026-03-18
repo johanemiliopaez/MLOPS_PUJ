@@ -1,6 +1,6 @@
-# End-to-End MLOps Pipeline: Del Dato a Producción
+# Proyecto 1 End-to-End MLOps Pipeline
 
-Este proyecto implementa una arquitectura completa de Machine Learning Operations (MLOps) utilizando contenedores Docker. Simula un entorno empresarial real donde la ingesta de datos está aislada en su propia red y un orquestador ETL extrae, procesa y sirve los datos a un entorno de experimentación y producción.
+Este proyecto implementa una arquitectura completa de Machine Learning Operations (MLOps) utilizando contenedores Docker. Se configura  un entorno   donde la ingesta de datos está aislada en su propia red y un orquestador ETL extrae, procesa y sirve los datos a un entorno de experimentación.
 
 ## Arquitectura del Sistema
 
@@ -9,9 +9,9 @@ El proyecto está compuesto por 6 bloques principales distribuidos en dos redes 
 1. **API de Datos (Fuente Externa):** Simula un proveedor de datos externo. Entrega lotes (batches) de información cada 5 minutos. Vive aislada en la `data_network`.
 2. **Apache Airflow (ETL Pipeline):** Actúa como el puente autorizado entre ambas redes. Extrae los datos crudos, los limpia, imputa nulos, codifica variables categóricas (manteniendo el contexto histórico) y divide el dataset en Train/Test.
 3. **MySQL (Almacén Relacional):** Guarda las tablas intermedias (`tabla_raw`, `tabla_clean`) y las tablas finales listas para entrenamiento (`tabla_train`, `tabla_test`).
-4. **MinIO (Object Storage & Model Registry):** Almacena el diccionario de mapeo de variables categóricas generado por Airflow y sirve como repositorio para los modelos serializados (`.pkl`) entrenados.
+4. **MinIO (Object Storage):** Repositorio para los modelos serializados (`.pkl`) entrenados.
 5. **JupyterLab (Entorno de Experimentación):** Opera conectado directamente a MySQL y MinIO. Es utilizado para entrenar modelos sin requerir tareas de limpieza de datos en esta etapa.
-6. **FastAPI (API de Inferencia en Producción):** Descarga el modelo ganador y el diccionario de mapeo desde MinIO. Traduce los datos crudos del usuario a formato matemático y expone un endpoint REST resiliente para predicciones en tiempo real.
+6. **FastAPI (API de Inferencia en Producción):** Descarga el modelo   desde MinIO. Traduce los datos crudos del usuario a formato matemático y expone un endpoint REST resiliente para predicciones en tiempo real.
 
 ## Estructura del Proyecto
 
@@ -70,18 +70,6 @@ JSON
   ]
 }
 
-# Configuración por Variables de Entorno
-
-El proyecto usa variables de entorno para MySQL, MinIO, Airflow y Jupyter. Valores por defecto funcionan sin configuración adicional.
-
-Para personalizar (ej. otro host, credenciales):
-
-```bash
-cp .env.example .env
-# Editar .env con tus valores
-```
-
-Variables principales: `MYSQL_HOST`, `MYSQL_USER`, `MYSQL_PASSWORD`, `MINIO_HOST`, `MINIO_ACCESS_KEY`, `MINIO_SECRET_KEY`, `JUPYTER_TOKEN` y `AIRFLOW_USERNAME`/`AIRFLOW_PASSWORD`.
 
 # Guía de Ejecución y Pruebas (Paso a Paso)
 ## 1. Despliegue de la Infraestructura
@@ -90,12 +78,18 @@ El usuario debe ubicarse en la raíz del proyecto y ejecutar:
 Bash
 
 docker compose up -d --build
+<p align="center">
+<img width="1491" height="628" alt="image" src="https://github.com/user-attachments/assets/d1bbe24c-3bd7-43a8-a787-67acf8548d18" />
+ </p>
 
 ## 2. Probar la Extracción (API de Datos)
 
     El usuario ingresa a: http://localhost:8080/docs
 
     Ejecuta el endpoint GET /data (parámetro group_number=1).
+    <p align="center">
+    <img width="631" height="569" alt="image" src="https://github.com/user-attachments/assets/b39ec1d1-ed01-4bc5-bb53-b64f3b960a7f" />
+    </p>
 
 ## 3. Ejecutar el Pipeline ETL (Airflow)
 
@@ -104,12 +98,18 @@ docker compose up -d --build
     Enciende el DAG etl_ml_pipeline y presiona Trigger DAG (botón de "Play").
 
     Verificación: En MinIO (http://localhost:9001) el usuario visualiza el bucket artefactos con el archivo mapeo_variables.pkl.
-
+<p align="center">
+<img width="1691" height="709" alt="image" src="https://github.com/user-attachments/assets/0acd0af8-4307-48d5-bada-8213117b6551" />
+</p>
 ## 4. Entrenar el Modelo (JupyterLab)
 
     Ingresa a: http://localhost:8888 (Token: `jupyter` o el valor de `JUPYTER_TOKEN`).
 
     Abre `Prueba.ipynb` y ejecuta todas las celdas. Se conecta a MySQL y MinIO usando las variables de entorno configuradas.
+<p align="center">
+<img width="1684" height="698" alt="image" src="https://github.com/user-attachments/assets/c3da2ffc-2b7b-489f-88ab-dd0747ef9d5a" />
+</p>
+    
 
 ## 5. Consumir el Modelo en Producción (API de Inferencia)
 
@@ -118,6 +118,14 @@ docker compose up -d --build
     Ejecuta POST /reload para descargar el modelo y el mapeo.
 
     Ejecuta POST /predict enviando un payload de prueba.
+<p align="center">
+<img width="1167" height="393" alt="image" src="https://github.com/user-attachments/assets/da7f1cef-a894-495e-b135-5e93a9d519a0" />
+
+<img width="648" height="446" alt="image" src="https://github.com/user-attachments/assets/e268c956-d445-447b-acbc-d8464be368b8" />
+</p>
+
+
+    
 
 # Retos Encontrados y Soluciones Implementadas
 1. Concurrencia en Base de Datos de Airflow
