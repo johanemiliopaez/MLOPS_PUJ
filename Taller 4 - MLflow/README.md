@@ -36,7 +36,7 @@ docker compose up -d --build
 |----------|-----|--------------|
 | JupyterLab | http://localhost:8888 | token: jupyter |
 | MLflow | http://localhost:5002 | — |
-| MinIO | http://localhost:9001 | minioadmin / minioadmin |
+| MinIO | http://localhost:9001 | admin / admin1234 |
 | API Inferencia | http://localhost:8000 | — |
 
 ## Flujo
@@ -45,12 +45,53 @@ docker compose up -d --build
    - `entrenamiento_mlflow.ipynb`: 20+ experimentos con RandomForest → modelo PenguinsRF
    - `entrenamiento_multimodelo.ipynb`: 6 técnicas (RF, LR, DT, GB, KNN, SVM) × 20 iteraciones cada una
 
-2. **API Inferencia**:
-   - `POST /predict` – modelo original (PenguinsRF)
-   - `POST /predict/models` – elegir modelo: `{"model_name": "PenguinsLR", "features": [39.1, 18.7, 181, 3750, 0, 0, 2007]}`
-   - `GET /models` – lista modelos disponibles
-   - Modelos: PenguinsRF, PenguinsLR, PenguinsDT, PenguinsGB, PenguinsKNN, PenguinsSVM
+2. **API Inferencia**: ver ejemplos abajo.
 
-## Formato de predicción
+## API de Inferencia – Ejemplos
 
-El modelo espera 7 features: bill_length_mm, bill_depth_mm, flipper_length_mm, body_mass_g, island_encoded (0=Torgersen, 1=Biscoe, 2=Dream), sex_encoded (0=female, 1=male), year. Respuesta: `species_prediccion` (Adelie, Chinstrap o Gentoo).
+**Features (7 valores en orden):** bill_length_mm, bill_depth_mm, flipper_length_mm, body_mass_g, island_encoded (0=Torgersen, 1=Biscoe, 2=Dream), sex_encoded (0=female, 1=male), year.
+
+### POST /predict (modelo original PenguinsRF)
+
+```bash
+curl -X POST http://localhost:8000/predict \
+  -H "Content-Type: application/json" \
+  -d '{"features": [39.1, 18.7, 181, 3750, 0, 0, 2007]}'
+```
+
+**Respuesta:**
+```json
+{"species_prediccion": "Adelie"}
+```
+
+### POST /predict/models (elegir modelo)
+
+```bash
+# Logistic Regression
+curl -X POST http://localhost:8000/predict/models \
+  -H "Content-Type: application/json" \
+  -d '{"model_name": "PenguinsLR", "features": [39.1, 18.7, 181, 3750, 0, 0, 2007]}'
+
+# KNN
+curl -X POST http://localhost:8000/predict/models \
+  -H "Content-Type: application/json" \
+  -d '{"model_name": "PenguinsKNN", "features": [39.1, 18.7, 181, 3750, 0, 0, 2007]}'
+
+# SVM
+curl -X POST http://localhost:8000/predict/models \
+  -H "Content-Type: application/json" \
+  -d '{"model_name": "PenguinsSVM", "features": [39.1, 18.7, 181, 3750, 0, 0, 2007]}'
+```
+
+**Respuesta:**
+```json
+{"species_prediccion": "Adelie", "model_name": "PenguinsLR"}
+```
+
+**Modelos disponibles:** PenguinsRF, PenguinsLR, PenguinsDT, PenguinsGB, PenguinsKNN, PenguinsSVM
+
+### GET /models (listar modelos)
+
+```bash
+curl http://localhost:8000/models
+```
