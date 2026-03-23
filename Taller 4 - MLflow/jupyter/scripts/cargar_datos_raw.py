@@ -8,9 +8,10 @@ from sqlalchemy import create_engine
 
 PG_HOST = os.environ.get("POSTGRES_HOST", "postgres")
 PG_PORT = os.environ.get("POSTGRES_PORT", "5432")
-PG_USER = os.environ.get("POSTGRES_USER", "mlflow_user")
-PG_PASS = os.environ.get("POSTGRES_PASSWORD", "mlflow_pass")
-CONN = f"postgresql://{PG_USER}:{PG_PASS}@{PG_HOST}:{PG_PORT}/mlflow_db"
+PG_USER = os.environ.get("POSTGRES_USER", "admin")  # O el usuario que hayas dejado
+PG_PASS = os.environ.get("POSTGRES_PASSWORD", "admin")
+PG_DB = os.environ.get("POSTGRES_DB", "data_db") # Leemos la variable de entorno que pusimos en el compose
+CONN_RAW = f"postgresql://{PG_USER}:{PG_PASS}@{PG_HOST}:{PG_PORT}/{PG_DB}"
 
 if __name__ == "__main__":
     csv_path = "/home/jovyan/data/penguins.csv"
@@ -22,5 +23,5 @@ if __name__ == "__main__":
 
     df = pd.read_csv(csv_path)
     engine = create_engine(CONN)
-    df.to_sql("data_raw", engine, if_exists="replace", index=False, schema="taller_data")
+    df.to_sql("data_raw", engine, if_exists="replace", index=False)
     print(f"Cargados {len(df)} registros en data_raw")
