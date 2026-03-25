@@ -1,0 +1,32 @@
+# API de inferencia usando imagen publicada en Docker Hub.
+# Requiere la red del stack principal (postgres, mlflow, minio) ya levantado.
+#
+# Uso:
+#   export DOCKERHUB_IMAGE=tuusuario/penguins-inferencia:latest
+#   export MLFLOW_STACK_NETWORK=taller5locust_mlflow_network  # ver README
+#   docker compose -f docker-compose.inferencia.yaml up -d
+#
+# Evita conflicto de puerto con el api-inferencia del docker-compose.yaml principal
+# (detén ese servicio o cambia API_PUBLISHED_PORT).
+
+services:
+  api-inferencia-hub:
+    image: ${DOCKERHUB_IMAGE:?Definir DOCKERHUB_IMAGE (ej. usuario/penguins-inferencia:latest)}
+    container_name: api_inferencia_hub
+    ports:
+      - "${API_PUBLISHED_PORT:-8005}:8000"
+    environment:
+      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI:-http://mlflow:5000}
+      MLFLOW_S3_ENDPOINT_URL: ${MLFLOW_S3_ENDPOINT_URL:-http://minio:9000}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-admin}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-admin1234}
+      MLFLOW_MODEL_NAME: ${MLFLOW_MODEL_NAME:-PenguinsRF}
+    mem_limit: ${API_MEM_LIMIT:-256m}
+    cpus: ${API_CPUS:-0.5}
+    networks:
+      - mlflow_network
+
+networks:
+  mlflow_network:
+    external: true
+    name: ${MLFLOW_STACK_NETWORK:-taller5locust_mlflow_network}

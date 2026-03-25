@@ -1,0 +1,65 @@
+# Tres réplicas de la API + nginx con balanceo round-robin (least_conn en upstream).
+# Puertos host: 8001, 8002, 8003 (réplicas) y 8020 (nginx → reparte carga).
+#
+#   export DOCKERHUB_IMAGE=tuusuario/penguins-inferencia:latest
+#   docker compose -f docker-compose.inferencia-replicas.yaml up -d
+#
+# Locust: LOCUST_HOST=http://nginx-replicas:80
+
+services:
+  api-inferencia-1:
+    image: ${DOCKERHUB_IMAGE:?Definir DOCKERHUB_IMAGE}
+    container_name: api_inferencia_1
+    ports:
+      - "8001:8000"
+    environment: &api_env
+      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI:-http://mlflow:5000}
+      MLFLOW_S3_ENDPOINT_URL: ${MLFLOW_S3_ENDPOINT_URL:-http://minio:9000}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:-admin}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:-admin1234}
+      MLFLOW_MODEL_NAME: ${MLFLOW_MODEL_NAME:-PenguinsRF}
+    mem_limit: ${API_MEM_LIMIT:-256m}
+    cpus: ${API_CPUS:-0.5}
+    networks:
+      - mlflow_network
+
+  api-inferencia-2:
+    image: ${DOCKERHUB_IMAGE:?Definir DOCKERHUB_IMAGE}
+    container_name: api_inferencia_2
+    ports:
+      - "8002:8000"
+    environment: *api_env
+    mem_limit: ${API_MEM_LIMIT:-256m}
+    cpus: ${API_CPUS:-0.5}
+    networks:
+      - mlflow_network
+
+  api-inferencia-3:
+    image: ${DOCKERHUB_IMAGE:?Definir DOCKERHUB_IMAGE}
+    container_name: api_inferencia_3
+    ports:
+      - "8003:8000"
+    environment: *api_env
+    mem_limit: ${API_MEM_LIMIT:-256m}
+    cpus: ${API_CPUS:-0.5}
+    networks:
+      - mlflow_network
+
+  nginx-replicas:
+    image: nginx:1.27-alpine
+    container_name: nginx_replicas_inferencia
+    ports:
+      - "${NGINX_REPLICAS_PORT:-8020}:80"
+    volumes:
+      - ./nginx/nginx-replicas.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api-inferencia-1
+      - api-inferencia-2
+      - api-inferencia-3
+    networks:
+      - mlflow_network
+
+networks:
+  mlflow_network:
+    external: true
+    name: ${MLFLOW_STACK_NETWORK:-taller5locust_mlflow_network}

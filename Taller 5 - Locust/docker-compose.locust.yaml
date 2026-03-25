@@ -1,0 +1,30 @@
+# Locust en modo headless contra la API de inferencia.
+# Debe compartir red con el contenedor de la API (servicio api-inferencia o api-inferencia-hub / nginx réplicas).
+#
+# Variables útiles:
+#   LOCUST_HOST=http://api-inferencia:8000
+#   LOCUST_HOST=http://api-inferencia-hub:8000
+#   LOCUST_HOST=http://nginx-replicas:80   (con docker-compose.inferencia-replicas.yaml)
+#   MLFLOW_STACK_NETWORK  (misma red que el stack MLflow)
+#   LOCUST_USERS, LOCUST_SPAWN_RATE, LOCUST_RUN_TIME
+
+services:
+  locust:
+    image: locustio/locust:2.32.4
+    container_name: locust_headless
+    command: >
+      -f /mnt/locust/locustfile.py
+      --headless
+      -u ${LOCUST_USERS:-10000}
+      -r ${LOCUST_SPAWN_RATE:-500}
+      --run-time ${LOCUST_RUN_TIME:-10m}
+      --host ${LOCUST_HOST:-http://api-inferencia:8000}
+    volumes:
+      - ./locust:/mnt/locust:ro
+    networks:
+      - mlflow_network
+
+networks:
+  mlflow_network:
+    external: true
+    name: ${MLFLOW_STACK_NETWORK:-taller5locust_mlflow_network}
