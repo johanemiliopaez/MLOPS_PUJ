@@ -1,0 +1,133 @@
+version: '3.8'
+
+# Declaración unificada de la red
+networks:
+  mlflow_network:
+    driver: bridge
+
+# Declaración de los volúmenes persistentes
+volumes:
+  postgres_data:
+  minio_data:
+
+services:
+  # === PostgreSQL: metadata de MLflow + datos raw/procesados ===
+  postgres:
+    image: postgres:15
+    container_name: postgres_mlflow
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: mlflow_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d:ro
+    ports:
+      - "5432:5432"
+    networks:
+      - mlflow_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mlflow_user -d mlflow_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # === MinIO: artifact store para MLflow ===
+  minio:
+    image: minio/minio:latest
+    container_name: minio_mlflow
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: admin1234
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - mlflow_network
+
+  # === MLflow: tracking + model registry ===
+  mlflow:
+    build: ./mlflow
+    container_name: mlflow_server
+    command: >
+      mlflow server
+      --backend-store-uri postgresql://mlflow_user:mlflow_pass@postgres:5432/mlflow_db
+      --artifacts-destination s3://mlflow-artifacts/
+      --host 0.0.0.0
+      --port 5000
+    environment:
+      MLFLOW_S3_ENDPOINT_URL: http://minio:9000
+      AWS_ACCESS_KEY_ID: admin
+      AWS_SECRET_ACCESS_KEY: admin1234
+      AWS_DEFAULT_REGION: us-east-1
+    ports:
+      - "5002:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    networks:
+      - mlflow_network
+
+  # === MinIO init: crear bucket mlflow-artifacts ===
+  minio-init:
+    image: minio/mc:latest
+    container_name: minio_init_mlflow
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      mc alias set myminio http://minio:9000 admin admin1234;
+      mc mb myminio/mlflow-artifacts --ignore-existing;
+      exit 0;
+      "
+    restart: "no"
+    networks:
+      - mlflow_network
+
+  # === JupyterLab: notebooks de entrenamiento ===
+  jupyterlab:
+    build: ./jupyter
+    container_name: jupyterlab_mlflow
+    ports:
+      - "8888:8888"
+    environment:
+      JUPYTER_TOKEN: jupyter
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLFLOW_S3_ENDPOINT_URL: http://minio:9000
+      AWS_ACCESS_KEY_ID: admin
+      AWS_SECRET_ACCESS_KEY: admin1234
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: data_db
+    volumes:
+      - ./jupyter/notebooks:/home/jovyan/work
+      - ./Dataset:/home/jovyan/data
+    depends_on:
+      - mlflow
+      - minio-init
+    networks:
+      - mlflow_network
+
+  # === API de producción: servir modelo con FastAPI (Imagen DockerHub) ===
+  api-produccion:
+    image: puenayan1/penguins-api:v1
+    container_name: api_penguins_prod
+    ports:
+      - "8001:8000"
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
+      - AWS_ACCESS_KEY_ID=admin
+      - AWS_SECRET_ACCESS_KEY=admin1234
+    depends_on:
+      - mlflow
+    networks:
+      - mlflow_network

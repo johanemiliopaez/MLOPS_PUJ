@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  api-testing:
+    image: puenayan1/penguins-api:v1
+    #container_name: api_penguins_test
+    environment:
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
+      - AWS_ACCESS_KEY_ID=admin
+      - AWS_SECRET_ACCESS_KEY=admin1234
+    deploy:
+      resources:
+        limits:
+          cpus: '1'      # Límite de CPU
+          memory: '512M'   # Límite de RAM
+    networks:
+      - default
+      - taller5-mlflow_mlflow_network
+
+  locust:
+    image: locustio/locust
+    container_name: locust_tester
+    ports:
+      - "8089:8089"
+    volumes:
+      - ./locustfile.py:/mnt/locust/locustfile.py
+    command: -f /mnt/locust/locustfile.py --host http://api-testing:8000
+    depends_on:
+      - api-testing
+    networks:
+      - default
+
+networks:
+  taller5-mlflow_mlflow_network:
+    external: true
