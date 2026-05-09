@@ -1,0 +1,44 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: locust
+  namespace: mlops-proyecto2
+spec:
+  selector:
+    app: locust
+  ports:
+    - port: 8089
+      targetPort: 8089
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: locust
+  namespace: mlops-proyecto2
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: locust
+  template:
+    metadata:
+      labels:
+        app: locust
+    spec:
+      containers:
+        - name: locust
+          image: docker.io/innovacion/proyecto2-locust:latest
+          imagePullPolicy: Always
+          args: ["-f", "/mnt/locust/locustfile.py", "--host", "http://api:8000"]
+          ports:
+            - containerPort: 8089
+          env:
+            - name: LOCUST_HOST
+              value: http://api:8000
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"

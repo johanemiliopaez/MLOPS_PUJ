@@ -1,0 +1,131 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init-sql
+  namespace: mlops-proyecto2
+data:
+  01_init_databases.sql: |
+    CREATE DATABASE mlops_data;
+    CREATE DATABASE mlflow_meta;
+    CREATE DATABASE airflow_meta;
+    \connect mlops_data;
+    CREATE TABLE IF NOT EXISTS raw_data (
+        raw_id BIGSERIAL PRIMARY KEY,
+        batch_id INTEGER NOT NULL,
+        source_file TEXT NOT NULL,
+        load_timestamp TIMESTAMPTZ NOT NULL,
+        status TEXT NOT NULL,
+        row_hash TEXT NOT NULL UNIQUE,
+        payload JSONB NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_raw_data_batch_id ON raw_data(batch_id);
+    CREATE INDEX IF NOT EXISTS idx_raw_data_load_timestamp ON raw_data(load_timestamp);
+    CREATE TABLE IF NOT EXISTS clean_data (
+        clean_id BIGSERIAL PRIMARY KEY,
+        source_batch_id INTEGER,
+        processed_at TIMESTAMPTZ NOT NULL,
+        row_hash TEXT NOT NULL UNIQUE,
+        features JSONB NOT NULL,
+        target_value TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_clean_data_processed_at ON clean_data(processed_at);
+    CREATE TABLE IF NOT EXISTS inference_logs (
+        inference_id BIGSERIAL PRIMARY KEY,
+        request_id TEXT NOT NULL UNIQUE,
+        inference_timestamp TIMESTAMPTZ NOT NULL,
+        model_name TEXT NOT NULL,
+        model_version TEXT NOT NULL,
+        model_alias TEXT,
+        input_payload JSONB NOT NULL,
+        prediction JSONB NOT NULL,
+        score DOUBLE PRECISION,
+        response_time_ms DOUBLE PRECISION NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_inference_logs_timestamp ON inference_logs(inference_timestamp);
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+  namespace: mlops-proyecto2
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+  namespace: mlops-proyecto2
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: proyecto2-secrets
+                  key: POSTGRES_USER
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: proyecto2-secrets
+                  key: POSTGRES_PASSWORD
+            - name: POSTGRES_DB
+              value: postgres
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+            - name: postgres-init-sql
+              mountPath: /docker-entrypoint-initdb.d/01_init_databases.sql
+              subPath: 01_init_databases.sql
+          readinessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U $POSTGRES_USER"]
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          livenessProbe:
+            exec:
+              command: ["sh", "-c", "pg_isready -U $POSTGRES_USER"]
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+      volumes:
+        - name: postgres-init-sql
+          configMap:
+            name: postgres-init-sql
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi

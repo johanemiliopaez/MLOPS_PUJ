@@ -1,0 +1,7 @@
+fastapi
+uvicorn[standard]
+pandas
+mlflow
+sqlalchemy
+psycopg2-binary
+prometheus-client

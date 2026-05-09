@@ -1,0 +1,12 @@
+resources:
+  - 00-namespace.yaml
+  - 01-config-and-secrets.yaml
+  - 02-postgres.yaml
+  - 03-minio.yaml
+  - 04-mlflow.yaml
+  - 05-api.yaml
+  - 06-streamlit.yaml
+  - 07-airflow.yaml
+  - 08-prometheus.yaml
+  - 09-grafana.yaml
+  - 10-locust.yaml

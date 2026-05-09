@@ -1,0 +1,6 @@
+pandas
+requests
+scikit-learn
+mlflow
+sqlalchemy
+psycopg2-binary
