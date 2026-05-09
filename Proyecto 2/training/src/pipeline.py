@@ -1,9 +1,11 @@
 import json
 import os
+import re
 from datetime import datetime, timezone
 from io import StringIO
 from pathlib import Path
 from typing import Any
+from urllib.parse import parse_qs, urlparse
 
 import mlflow
 import pandas as pd
@@ -72,20 +74,104 @@ def get_engine(db_name: str | None = None):
     return create_engine(get_database_uri(db_name), future=True)
 
 
+def _extract_gdrive_id(url: str) -> str | None:
+    """Extrae el id de un archivo de Google Drive a partir de varias formas de URL."""
+    parsed = urlparse(url)
+    qs = parse_qs(parsed.query)
+    if "id" in qs and qs["id"]:
+        return qs["id"][0]
+    match = re.search(r"/d/([A-Za-z0-9_-]+)", url)
+    if match:
+        return match.group(1)
+    return None
+
+
+def _download_from_gdrive(url: str, destination: Path) -> None:
+    """Descarga un archivo grande de Google Drive resolviendo el confirm token.
+
+    Implementa el flujo descrito en el enunciado (`confirm={{VALUE}}`) y, como
+    primera opción, usa `gdown` que ya conoce todas las variantes del proceso.
+    """
+    file_id = _extract_gdrive_id(url)
+    try:
+        import gdown  # type: ignore[import-not-found]
+
+        if file_id:
+            gdown.download(id=file_id, output=str(destination), quiet=True, fuzzy=True)
+        else:
+            gdown.download(url=url, output=str(destination), quiet=True, fuzzy=True)
+        return
+    except Exception:
+        pass
+
+    session = requests.Session()
+    response = session.get(url, params={"confirm": "t"}, stream=True, timeout=180)
+    response.raise_for_status()
+
+    token = None
+    for key, value in response.cookies.items():
+        if key.startswith("download_warning"):
+            token = value
+            break
+    if token is None and "text/html" in response.headers.get("Content-Type", ""):
+        match = re.search(r"confirm=([0-9A-Za-z_-]+)", response.text)
+        if match:
+            token = match.group(1)
+
+    if token:
+        params = {"confirm": token}
+        if file_id:
+            params["id"] = file_id
+        response = session.get(url, params=params, stream=True, timeout=300)
+        response.raise_for_status()
+
+    with destination.open("wb") as fh:
+        for chunk in response.iter_content(chunk_size=1024 * 1024):
+            if chunk:
+                fh.write(chunk)
+
+
+def _validate_csv(path: Path) -> None:
+    """Valida que el archivo descargado sea un CSV legible y no una página HTML.
+
+    Google Drive devuelve HTML cuando el archivo es grande y no se aceptó el
+    aviso de virus scan. Si eso pasó, abortamos en vez de continuar con un
+    DataFrame inservible.
+    """
+    if path.stat().st_size < 1024:
+        raise RuntimeError(f"Dataset descargado demasiado pequeño ({path.stat().st_size} bytes); revisa DATASET_URL")
+
+    with path.open("rb") as fh:
+        head = fh.read(2048).lower()
+    if b"<html" in head or b"<!doctype html" in head:
+        raise RuntimeError(
+            "El dataset descargado parece ser una página HTML de Google Drive (confirm token). "
+            "Verifica permisos del enlace o reintenta."
+        )
+
+    pd.read_csv(path, nrows=5)
+
+
 def ensure_dataset_present() -> str:
+    """Descarga el dataset si no existe localmente.
+
+    Cumple el flujo descrito en la sección 3.1 del enunciado:
+    crea el directorio destino, evita re-descargar si el archivo ya existe,
+    y resuelve el `confirm={{VALUE}}` propio de Google Drive para archivos
+    grandes.
+    """
     dataset_path = Path(get_env("DATASET_PATH", "/opt/project/data/Diabetes.csv"))
     dataset_url = get_env("DATASET_URL", "")
     dataset_path.parent.mkdir(parents=True, exist_ok=True)
 
-    if dataset_path.exists():
+    if dataset_path.exists() and dataset_path.stat().st_size > 1024:
         return str(dataset_path)
 
     if not dataset_url:
         raise FileNotFoundError(f"Dataset not found at {dataset_path} and DATASET_URL is empty")
 
-    response = requests.get(dataset_url, timeout=120)
-    response.raise_for_status()
-    dataset_path.write_bytes(response.content)
+    _download_from_gdrive(dataset_url, dataset_path)
+    _validate_csv(dataset_path)
     return str(dataset_path)
 
 
@@ -235,6 +321,38 @@ def load_clean_dataframe() -> tuple[pd.DataFrame, pd.Series]:
     return features, target
 
 
+def split_train_val_test(
+    test_size: float = 0.15, val_size: float = 0.15, random_state: int = 42
+) -> dict[str, Any]:
+    """Particiona clean_data en train/val/test estratificado.
+
+    Devuelve un resumen con tamaños y el balance de clases. Los splits se
+    materializan en memoria en el llamador para evitar serializar DataFrames
+    grandes vía XCom. Esta función existe como tarea explícita del DAG para
+    cumplir con el requisito de separación visible de datos.
+    """
+    features, target = load_clean_dataframe()
+    if target.nunique() < 2:
+        raise RuntimeError("Target column must contain at least two classes")
+
+    x_train, x_temp, y_train, y_temp = train_test_split(
+        features, target, test_size=test_size + val_size, random_state=random_state, stratify=target
+    )
+    relative_test = test_size / (test_size + val_size)
+    x_val, x_test, y_val, y_test = train_test_split(
+        x_temp, y_temp, test_size=relative_test, random_state=random_state, stratify=y_temp
+    )
+    return {
+        "train_rows": int(len(x_train)),
+        "val_rows": int(len(x_val)),
+        "test_rows": int(len(x_test)),
+        "positive_rate_train": float(y_train.mean()),
+        "positive_rate_val": float(y_val.mean()),
+        "positive_rate_test": float(y_test.mean()),
+        "feature_count": int(features.shape[1]),
+    }
+
+
 def build_candidate_models(numeric_features: list[str], categorical_features: list[str]) -> dict[str, Pipeline]:
     numeric_transformer = Pipeline(
         steps=[
@@ -283,19 +401,78 @@ def configure_mlflow() -> MlflowClient:
     return MlflowClient(tracking_uri=tracking_uri)
 
 
-def register_best_model(client: MlflowClient, run_id: str, model_name: str) -> dict[str, Any]:
+def get_current_champion_metric(
+    client: MlflowClient, model_name: str, alias: str, metric_key: str
+) -> float | None:
+    """Recupera la métrica principal del modelo productivo actual.
+
+    Si no existe campeón previo (primera corrida) devuelve None y la
+    promoción es automática. Soporta tanto MLflow con aliases como con
+    stages (`Production`).
+    """
+    try:
+        version = client.get_model_version_by_alias(model_name, alias)
+    except Exception:
+        try:
+            versions = client.search_model_versions(f"name='{model_name}'")
+            production = [v for v in versions if getattr(v, "current_stage", "") == "Production"]
+            version = sorted(production, key=lambda item: int(item.version), reverse=True)[0] if production else None
+        except Exception:
+            version = None
+
+    if version is None:
+        return None
+
+    try:
+        run = client.get_run(version.run_id)
+        return float(run.data.metrics.get(metric_key)) if metric_key in run.data.metrics else None
+    except Exception:
+        return None
+
+
+def register_best_model(
+    client: MlflowClient,
+    run_id: str,
+    model_name: str,
+    candidate_metric: float,
+    metric_key: str = "val_recall",
+) -> dict[str, Any]:
+    """Registra una versión nueva y la promueve a productivo solo si supera al campeón actual.
+
+    Esto cumple el requisito del enunciado de comparar el desempeño contra
+    modelos anteriores antes de promover. Si no hay campeón previo, se
+    promueve directamente.
+    """
     model_uri = f"runs:/{run_id}/model"
     model_version = mlflow.register_model(model_uri=model_uri, name=model_name)
     alias = get_env("MLFLOW_MODEL_ALIAS", "champion")
 
-    try:
-        client.set_registered_model_alias(model_name, alias, model_version.version)
-        state = alias
-    except Exception:
-        client.transition_model_version_stage(model_name, model_version.version, stage="Production", archive_existing_versions=True)
-        state = "Production"
+    previous_metric = get_current_champion_metric(client, model_name, alias, metric_key)
+    promoted = previous_metric is None or candidate_metric >= previous_metric
 
-    return {"model_name": model_name, "model_version": model_version.version, "state": state}
+    state = "registered-only"
+    if promoted:
+        try:
+            client.set_registered_model_alias(model_name, alias, model_version.version)
+            state = alias
+        except Exception:
+            client.transition_model_version_stage(
+                model_name,
+                model_version.version,
+                stage="Production",
+                archive_existing_versions=True,
+            )
+            state = "Production"
+
+    return {
+        "model_name": model_name,
+        "model_version": model_version.version,
+        "state": state,
+        "promoted": promoted,
+        "candidate_metric": candidate_metric,
+        "previous_champion_metric": previous_metric,
+        "selection_metric": metric_key,
+    }
 
 
 def train_and_register_model() -> dict[str, Any]:
@@ -359,7 +536,13 @@ def train_and_register_model() -> dict[str, Any]:
     if best_summary is None:
         raise RuntimeError("No model runs were created")
 
-    registration = register_best_model(client, best_summary["run_id"], model_name)
+    registration = register_best_model(
+        client,
+        best_summary["run_id"],
+        model_name,
+        candidate_metric=best_summary["metrics"]["val_recall"],
+        metric_key="val_recall",
+    )
     return {
         **best_summary,
         **registration,

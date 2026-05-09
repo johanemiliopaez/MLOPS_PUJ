@@ -39,32 +39,100 @@ data:
     {
       "annotations": {"list": []},
       "editable": true,
+      "refresh": "5s",
+      "time": {"from": "now-15m", "to": "now"},
       "panels": [
         {
           "datasource": "Prometheus",
           "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
-          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+          "gridPos": {"h": 5, "w": 6, "x": 0, "y": 0},
           "id": 1,
-          "targets": [{"expr": "sum(api_requests_total{endpoint=\"/predict\",status=\"success\"})", "refId": "A"}],
-          "title": "Predicciones Exitosas",
+          "targets": [{"expr": "sum(api_requests_total)", "refId": "A"}],
+          "title": "Solicitudes totales",
+          "type": "stat"
+        },
+        {
+          "datasource": "Prometheus",
+          "fieldConfig": {"defaults": {"unit": "short"}, "overrides": []},
+          "gridPos": {"h": 5, "w": 6, "x": 6, "y": 0},
+          "id": 2,
+          "targets": [{"expr": "sum(api_requests_total{status=\"success\"})", "refId": "A"}],
+          "title": "Predicciones exitosas",
+          "type": "stat"
+        },
+        {
+          "datasource": "Prometheus",
+          "fieldConfig": {"defaults": {"unit": "short", "color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "red", "value": 1}]}}, "overrides": []},
+          "gridPos": {"h": 5, "w": 6, "x": 12, "y": 0},
+          "id": 3,
+          "targets": [{"expr": "sum(api_requests_total{status=\"error\"})", "refId": "A"}],
+          "title": "Errores totales",
+          "type": "stat"
+        },
+        {
+          "datasource": "Prometheus",
+          "fieldConfig": {"defaults": {"unit": "percentunit", "color": {"mode": "thresholds"}, "thresholds": {"mode": "absolute", "steps": [{"color": "green", "value": null}, {"color": "yellow", "value": 0.01}, {"color": "red", "value": 0.05}]}}, "overrides": []},
+          "gridPos": {"h": 5, "w": 6, "x": 18, "y": 0},
+          "id": 4,
+          "targets": [{"expr": "sum(rate(api_requests_total{status=\"error\"}[1m])) / clamp_min(sum(rate(api_requests_total[1m])), 0.001)", "refId": "A"}],
+          "title": "Tasa de error (1m)",
           "type": "stat"
         },
         {
           "datasource": "Prometheus",
           "fieldConfig": {"defaults": {"unit": "reqps"}, "overrides": []},
-          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
-          "id": 2,
-          "targets": [{"expr": "rate(api_requests_total{endpoint=\"/predict\"}[1m])", "refId": "A"}],
-          "title": "Requests por Segundo",
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 5},
+          "id": 5,
+          "targets": [
+            {"expr": "sum by (status) (rate(api_requests_total{endpoint=\"/predict\"}[1m]))", "refId": "A", "legendFormat": "{{status}}"}
+          ],
+          "title": "Requests por segundo /predict (por status)",
           "type": "timeseries"
         },
         {
           "datasource": "Prometheus",
           "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []},
-          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8},
-          "id": 3,
-          "targets": [{"expr": "histogram_quantile(0.95, sum(rate(api_request_latency_seconds_bucket{endpoint=\"/predict\"}[5m])) by (le))", "refId": "A"}],
-          "title": "Latencia p95 /predict",
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 5},
+          "id": 6,
+          "targets": [
+            {"expr": "sum(rate(api_request_latency_seconds_sum{endpoint=\"/predict\"}[1m])) / clamp_min(sum(rate(api_request_latency_seconds_count{endpoint=\"/predict\"}[1m])), 0.001)", "refId": "A", "legendFormat": "promedio"}
+          ],
+          "title": "Latencia promedio /predict",
+          "type": "timeseries"
+        },
+        {
+          "datasource": "Prometheus",
+          "fieldConfig": {"defaults": {"unit": "s"}, "overrides": []},
+          "gridPos": {"h": 8, "w": 24, "x": 0, "y": 13},
+          "id": 7,
+          "targets": [
+            {"expr": "histogram_quantile(0.50, sum(rate(api_request_latency_seconds_bucket{endpoint=\"/predict\"}[5m])) by (le))", "refId": "A", "legendFormat": "p50"},
+            {"expr": "histogram_quantile(0.95, sum(rate(api_request_latency_seconds_bucket{endpoint=\"/predict\"}[5m])) by (le))", "refId": "B", "legendFormat": "p95"},
+            {"expr": "histogram_quantile(0.99, sum(rate(api_request_latency_seconds_bucket{endpoint=\"/predict\"}[5m])) by (le))", "refId": "C", "legendFormat": "p99"}
+          ],
+          "title": "Latencia /predict (p50/p95/p99)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": "Prometheus",
+          "fieldConfig": {"defaults": {"unit": "percentunit"}, "overrides": []},
+          "gridPos": {"h": 8, "w": 12, "x": 0, "y": 21},
+          "id": 8,
+          "targets": [
+            {"expr": "rate(process_cpu_seconds_total{job=\"api\"}[1m])", "refId": "A", "legendFormat": "CPU (cores)"}
+          ],
+          "title": "CPU del pod API (cores)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": "Prometheus",
+          "fieldConfig": {"defaults": {"unit": "decbytes"}, "overrides": []},
+          "gridPos": {"h": 8, "w": 12, "x": 12, "y": 21},
+          "id": 9,
+          "targets": [
+            {"expr": "process_resident_memory_bytes{job=\"api\"}", "refId": "A", "legendFormat": "RSS"}
+          ],
+          "title": "Memoria del pod API (RSS)",
           "type": "timeseries"
         }
       ],
@@ -73,7 +141,7 @@ data:
       "tags": ["proyecto2", "mlops"],
       "templating": {"list": []},
       "title": "Proyecto 2 API Dashboard",
-      "version": 1
+      "version": 2
     }
 ---
 apiVersion: v1

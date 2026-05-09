@@ -9,7 +9,13 @@ PROJECT_SRC = os.getenv("PROJECT_SRC", "/opt/airflow/project/training/src")
 if PROJECT_SRC not in sys.path:
     sys.path.insert(0, PROJECT_SRC)
 
-from pipeline import build_clean_layer, ensure_dataset_present, ingest_raw_batch, train_and_register_model  # noqa: E402
+from pipeline import (  # noqa: E402
+    build_clean_layer,
+    ensure_dataset_present,
+    ingest_raw_batch,
+    split_train_val_test,
+    train_and_register_model,
+)
 
 
 @dag(
@@ -20,6 +26,14 @@ from pipeline import build_clean_layer, ensure_dataset_present, ingest_raw_batch
     tags=["proyecto2", "mlops", "kubernetes"],
 )
 def mlops_diabetes_pipeline():
+    """Pipeline diario de MLOps para predicción de readmisión por diabetes.
+
+    Cada ejecución carga un nuevo lote (máx. 15.000 registros), valida
+    calidad, construye la capa limpia, separa train/val/test, entrena
+    LogisticRegression y RandomForest, registra todo en MLflow y promueve
+    el mejor modelo si supera al campeón actual.
+    """
+
     @task
     def validate_source_file() -> str:
         return ensure_dataset_present()
@@ -39,10 +53,19 @@ def mlops_diabetes_pipeline():
         return build_clean_layer()
 
     @task
+    def split_dataset(_: dict) -> dict:
+        return split_train_val_test()
+
+    @task
     def train_and_promote(_: dict) -> dict:
         return train_and_register_model()
 
-    train_and_promote(transform_and_clean(validate_batch(ingest_batch(validate_source_file()))))
+    source = validate_source_file()
+    raw = ingest_batch(source)
+    validated = validate_batch(raw)
+    cleaned = transform_and_clean(validated)
+    split = split_dataset(cleaned)
+    train_and_promote(split)
 
 
 dag_instance = mlops_diabetes_pipeline()

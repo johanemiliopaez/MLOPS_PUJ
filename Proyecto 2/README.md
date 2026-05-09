@@ -121,6 +121,9 @@ Proyecto 2/
 │   └── init/
 │       └── 01_init_databases.sql       # DDL de raw/clean/inference_logs
 │
+├── notebooks/
+│   └── 01_eda.ipynb                    # Análisis exploratorio (sección 3.1)
+│
 └── k8s/
     ├── kustomization.yaml
     ├── 00-namespace.yaml
@@ -188,25 +191,66 @@ Cada predicción que sale por la API queda registrada acá. Esto cumple el requi
 
 ---
 
+## Análisis exploratorio (sección 3.1)
+
+El EDA está en `notebooks/01_eda.ipynb` y cubre:
+
+1. Carga del dataset usando `ensure_dataset_present()` (descarga robusta desde Google Drive con manejo del `confirm` token).
+2. Calidad de datos: porcentaje de nulos por columna (justifica las columnas que se descartan).
+3. Distribución del target `readmitted` y motivación para binarizar como `<30 días` vs resto.
+4. Estadísticos y distribuciones de variables numéricas clínicas (`time_in_hospital`, `num_*`, `number_*`).
+5. Cardinalidad de variables categóricas (justifica `OneHotEncoder(handle_unknown="ignore")` y descarte de IDs).
+6. Tasa de readmisión por `A1Cresult`, `insulin`, `diabetesMed`.
+7. Correlaciones entre numéricas.
+8. Conclusiones que se materializan en `training/src/pipeline.py`.
+
+Para ejecutarlo localmente:
+
+```bash
+cd "Proyecto 2"
+python -m venv .venv && source .venv/bin/activate
+pip install -r training/requirements.txt jupyter matplotlib seaborn
+jupyter notebook notebooks/01_eda.ipynb
+```
+
+> El notebook reutiliza la misma función de descarga del pipeline para no duplicar lógica.
+
+## Descarga del dataset (sección 3.1)
+
+`ensure_dataset_present()` en `training/src/pipeline.py` implementa el flujo de descarga descrito en el enunciado:
+
+- Verifica si el archivo ya existe en `DATASET_PATH`.
+- Si no, descarga desde `DATASET_URL` (Google Drive) usando `gdown` con `fuzzy=True`.
+- Tiene un fallback manual con `requests.Session` que extrae el `confirm` token del cookie `download_warning` o del HTML, exactamente como sugiere el placeholder `confirm={{VALUE}}` del enunciado.
+- Valida post-descarga: si el archivo es < 1 KB o empieza con `<html`, aborta con un mensaje claro (esto evita el bug típico de guardar la página de aviso de Google Drive como `Diabetes.csv`).
+- Confirma con `pd.read_csv(path, nrows=5)` que el contenido es CSV legible antes de continuar.
+
 ## Pipeline de Airflow
 
-DAG: **`mlops_diabetes_pipeline`** (`@daily`, no catchup).
+DAG: **`mlops_diabetes_pipeline`** (`@daily`, `catchup=False`).
 
-Flujo:
+Flujo (6 tareas independientes):
 
-1. **`validate_source_file`**: descarga el CSV si no está presente (`DATASET_URL` → `DATASET_PATH`).
-2. **`ingest_batch`**: carga el siguiente lote de máximo `BATCH_SIZE` registros (default `15000`) en `raw_data`. El `batch_id` se autoincrementa según el último insertado.
-3. **`validate_batch`**: falla si `rows_inserted == 0`, evitando entrenar sobre datos vacíos.
-4. **`transform_and_clean`**: lee `raw_data`, normaliza nulos (`?` → `NA`), descarta duplicados, selecciona features candidatos clínicos, transforma el target `readmitted` a binario (`<30` vs resto cuando aplica) y persiste en `clean_data`.
-5. **`train_and_promote`**:
-   - Carga `clean_data`.
+1. **`validate_source_file`** — descarga el CSV si no está presente (`DATASET_URL` → `DATASET_PATH`).
+2. **`ingest_batch`** — carga el siguiente lote de máximo `BATCH_SIZE` registros (default `15000`) en `raw_data`. El `batch_id` se autoincrementa según el último insertado y se descartan duplicados por `row_hash`.
+3. **`validate_batch`** — validación de calidad: falla si `rows_inserted == 0`, evitando entrenar sobre datos vacíos.
+4. **`transform_and_clean`** — preprocesamiento e ingeniería de características: lee `raw_data`, normaliza nulos (`?` → `NA`), elimina duplicados, selecciona features candidatos clínicos, transforma el target `readmitted` (`<30` vs resto) a binario, y persiste el resultado en `clean_data`.
+5. **`split_dataset`** — separación explícita en `train` (70%) / `val` (15%) / `test` (15%) estratificada por target. Reporta tamaños y balance de clases en XCom para auditoría.
+6. **`train_and_promote`**:
    - Entrena `LogisticRegression` y `RandomForestClassifier` con `ColumnTransformer` (imputación + scaling para numéricas, imputación + one-hot para categóricas).
-   - Particiona `train/val/test` (70/15/15) con estratificación.
    - Registra en MLflow params, métricas (`recall`, `precision`, `F1`, `ROC-AUC`), `feature_columns.json` y modelo serializado con signature.
-   - Selecciona el mejor por **`val_recall`** (justificable clínicamente: minimizar falsos negativos en readmisión).
-   - Lo registra como modelo en `MLFLOW_MODEL_NAME` y le asigna alias `champion` (o stage `Production` como fallback en MLflow ≤ 2.x).
+   - Selecciona el mejor candidato del run actual por **`val_recall`**.
+   - **Compara `val_recall` contra el campeón previo** (`get_current_champion_metric`) y solo entonces asigna el alias `champion` (o stage `Production` como fallback). Si el modelo nuevo no supera al anterior, queda **registrado pero no promovido** (`state = "registered-only"`).
 
-La métrica principal es configurable y está documentada por código.
+### Justificación de la métrica
+
+`val_recall` se escogió porque el caso clínico es **predicción de readmisión hospitalaria**: un falso negativo (paciente que será readmitido y se predice "no") tiene un costo clínico mucho mayor que un falso positivo. Recall minimiza esos falsos negativos. Adicionalmente se loguean `precision`, `f1` y `roc_auc` para comparación.
+
+### Idempotencia y reejecución
+
+- `raw_data` y `clean_data` usan `row_hash UNIQUE` con `ON CONFLICT DO NOTHING`, por lo que reejecutar un lote no genera duplicados.
+- `inference_logs` usa `request_id UNIQUE`.
+- La promoción a productivo es idempotente: si el modelo nuevo no es estrictamente mejor, no se mueve el alias `champion`.
 
 ---
 
@@ -315,15 +359,24 @@ Sugerencia para sustentación:
 
 ## Observabilidad (Prometheus + Grafana)
 
-- **Prometheus** scrapea `api:8000/metrics` cada 15 s (configurado vía `ConfigMap`).
-- **Grafana** ya viene con:
-  - Datasource `Prometheus` (`http://prometheus:9090`) provisionado.
-  - Dashboard **Proyecto 2 API Dashboard** con tres paneles:
-    - Predicciones exitosas (`sum(api_requests_total{...status="success"})`).
-    - Requests por segundo (`rate(...)[1m]`).
-    - Latencia p95 de `/predict` (`histogram_quantile(0.95, ...)`).
+- **Prometheus** scrapea `api:8000/metrics` cada 15 s (configurado vía `ConfigMap`, ver `k8s/08-prometheus.yaml`).
+- **Grafana** trae provisionado:
+  - Datasource `Prometheus` (`http://prometheus:9090`).
+  - Dashboard **Proyecto 2 API Dashboard** con todos los paneles que pide el enunciado:
 
-Esto satisface el requisito de mostrar el efecto de Locust sobre los dashboards durante la sustentación.
+| # | Panel | Tipo | Métrica subyacente |
+|---|---|---|---|
+| 1 | Solicitudes totales | stat | `sum(api_requests_total)` |
+| 2 | Predicciones exitosas | stat | `sum(api_requests_total{status="success"})` |
+| 3 | Errores totales | stat | `sum(api_requests_total{status="error"})` |
+| 4 | Tasa de error (1m) | stat | `error_rate / total_rate` |
+| 5 | Requests/segundo /predict por status | timeseries | `rate(api_requests_total{endpoint="/predict"}[1m])` |
+| 6 | Latencia promedio /predict | timeseries | `rate(_sum) / rate(_count)` |
+| 7 | Latencia p50 / p95 / p99 /predict | timeseries | `histogram_quantile(...)` |
+| 8 | CPU del pod API (cores) | timeseries | `rate(process_cpu_seconds_total{job="api"}[1m])` |
+| 9 | Memoria del pod API (RSS) | timeseries | `process_resident_memory_bytes{job="api"}` |
+
+Las métricas `process_*` las expone `prometheus_client` automáticamente, sin necesidad de cAdvisor ni `kube-state-metrics`. Auto-refresh cada 5 s para que el efecto de Locust se vea en vivo durante la sustentación.
 
 ---
 
@@ -469,24 +522,96 @@ Se inyectan a los contenedores vía `envFrom` (`ConfigMap` + `Secret`).
 
 ## Cumplimiento del enunciado
 
-| Requisito del enunciado | Cómo se cumple |
+Mapeo punto a punto contra `MLOPS_Proyecto2_2026.pdf`:
+
+### 4. Requerimientos técnicos obligatorios
+
+| Requisito | Cómo se cumple |
 |---|---|
-| Despliegue 100% en Kubernetes | `kubectl apply -k k8s` levanta todo el namespace `mlops-proyecto2`. |
-| Imágenes propias en registro público | Todas las imágenes propias se publican en `docker.io/innovacion/proyecto2-*`. |
-| `Deployment`/`StatefulSet`, `Service`, `ConfigMap`, `Secret`, `PVC`, probes | Presentes en `k8s/`. |
-| `requests` y `limits` en cada contenedor | Definidos para todos los workloads. |
-| DAG de Airflow con varias tareas independientes | 5 tareas: validate → ingest → validate batch → clean → train. |
-| Carga incremental por lotes ≤ 15.000 | `ingest_raw_batch` lee `BATCH_SIZE` registros por ejecución y avanza con `batch_id`. |
-| Capas RAW / CLEAN / INFERENCE separadas | Tablas `raw_data`, `clean_data`, `inference_logs` en `mlops_data`. |
-| Trazabilidad en `raw_data` (batch, timestamp, source, status, hash) | Todas presentes. |
-| MLflow con backend store y artifact store externos (no SQLite) | Backend en PostgreSQL (`mlflow_meta`), artifacts en MinIO (`mlflow-artifacts`). |
-| Selección automática del mejor modelo y alias productivo | `register_best_model` asigna alias `champion` (o stage `Production`). |
-| API que consume modelo dinámicamente desde MLflow | `resolve_model_uri` resuelve `models:/<name>@<alias>` o última versión. |
-| Endpoints obligatorios `/health`, `/predict`, `/model-info`, `/metrics` | Implementados. |
-| Cada inferencia registrada en BD con campos exigidos | `log_inference` persiste en `inference_logs`. |
-| Interfaz Streamlit que solo habla con la API | `streamlit/app.py` solo llama HTTP a `API_URL`. |
-| Locust como componente del clúster | Deployment + Service propios en `k8s/10-locust.yaml`. |
-| Observabilidad con Prometheus + Grafana | Scrape config + dashboard JSON pre-provisionado. |
+| Despliegue 100% en Kubernetes (no docker-compose como entrega) | `kubectl apply -k k8s` levanta todo el namespace `mlops-proyecto2`. |
+| `Deployment`/`StatefulSet`, `Service`, `ConfigMap`, `Secret`, `PVC`, probes en cada componente | Presentes en `k8s/00-…` a `k8s/10-…`. |
+| `requests` y `limits` en cada contenedor | Definidos en todos los workloads (postgres, mlflow, api, streamlit, airflow, locust, prometheus, grafana). |
+| Imágenes propias en DockerHub | `docker.io/innovacion/proyecto2-{api,streamlit,airflow,mlflow,locust}`. |
+
+### DAG de Airflow (sección 4.2)
+
+| Tarea exigida | Tarea implementada |
+|---|---|
+| 1. Validación de archivo fuente | `validate_source_file` |
+| 2. Carga incremental por lotes a tabla raw | `ingest_batch` (≤ 15.000 registros) |
+| 3. Validación básica de calidad | `validate_batch` |
+| 4. Preprocesamiento y transformación | `transform_and_clean` |
+| 5. Almacenamiento en tabla independiente | inserción en `clean_data` con `ON CONFLICT DO NOTHING` |
+| 6. Separación train / val / test | `split_dataset` (estratificada 70/15/15) |
+| 7. Entrenamiento de uno o varios modelos | `train_and_promote` (LR + RandomForest) |
+| 8. Registro de params, métricas, artefactos y modelo en MLflow | `mlflow.log_param/log_metrics/log_dict/sklearn.log_model` |
+| 9. Comparación de desempeño contra modelos anteriores | `get_current_champion_metric` consulta el campeón previo y lo compara |
+| 10. Promoción automática del mejor modelo o alias productivo | Alias `champion` (o stage `Production` como fallback) sólo si supera al previo |
+
+### Almacenamiento (sección 4.3)
+
+| Capa exigida | Tabla |
+|---|---|
+| RAW | `raw_data` con `batch_id`, `load_timestamp`, `source_file`, `status`, `row_hash`, `payload` |
+| CLEAN | `clean_data` con `processed_at`, `row_hash`, `features`, `target_value` |
+| INFERENCE LOGS | `inference_logs` con `request_id`, `inference_timestamp`, `model_name`, `model_version`, `model_alias`, `input_payload`, `prediction`, `score`, `response_time_ms` |
+
+### MLflow (sección 6.4)
+
+| Requisito | Implementación |
+|---|---|
+| Backend de metadatos externo (no SQLite) | PostgreSQL: base `mlflow_meta` |
+| Artifact store externo | MinIO bucket `mlflow-artifacts` (creado vía Job) |
+| Registro completo por experimento | run_id + params + métricas (`val_recall`, `val_precision`, `val_f1`, `val_roc_auc`, métricas en test) + artefactos + modelo serializado con signature |
+| Promoción automática | Alias `champion` o stage `Production` |
+
+### API (sección 6.6)
+
+| Endpoint exigido | Implementado |
+|---|---|
+| `/health` | ✅ devuelve `ok` o `degraded` |
+| `/predict` | ✅ devuelve `prediction`, `score`, `model_name`, `model_version`, `model_alias`, `processing_time_ms` |
+| `/model-info` | ✅ devuelve nombre, versión, alias y URI |
+| `/metrics` | ✅ formato Prometheus |
+
+| Restricción | Cumplimiento |
+|---|---|
+| No cargar archivo local fijo | La API resuelve dinámicamente el URI desde MLflow |
+| Modelo productivo desde MLflow | `resolve_model_uri` busca `models:/<name>@champion` o `Production` |
+| Estrategia de carga | Carga al startup + cache en memoria con TTL configurable (`MODEL_CACHE_TTL_SECONDS`, default 300 s) y recarga forzada en `force=True` |
+| Registro de cada inferencia en BD | `log_inference` en `inference_logs` con todos los campos exigidos |
+
+### Interfaz Streamlit (sección 6.7)
+
+| Requisito | Cumplimiento |
+|---|---|
+| Ingreso de valores | Editor JSON |
+| Carga de ejemplo | Botón "Cargar ejemplo" con `SAMPLE_PAYLOAD` |
+| Envío a la API | Botón "Enviar predicción" → `POST /predict` |
+| Visualización de la predicción | `st.json(response.json())` |
+| Visualización de la versión del modelo | `model_version`, `model_alias` en la respuesta + botón "Consultar modelo" → `GET /model-info` |
+| Errores de validación | `try/except json.JSONDecodeError` y `requests.HTTPError` |
+| No habla directo con MLflow ni con la BD | Sólo HTTP a `API_URL` |
+
+### Locust (sección 6.8)
+
+| Requisito | Cumplimiento |
+|---|---|
+| Componente del clúster | `k8s/10-locust.yaml` (Deployment + Service) |
+| Escenario contra `/predict` | `InferenceUser` con tareas `predict` y `health` |
+| Métricas reportadas (usuarios, spawn rate, totales, fallidas, latencias, percentiles) | Provistas por la UI nativa de Locust en `:8089` |
+
+### Dashboard mínimo de Grafana (sección 5.3)
+
+| Métrica exigida | Panel del dashboard |
+|---|---|
+| Número total de solicitudes | Panel 1 (`sum(api_requests_total)`) |
+| Solicitudes por segundo | Panel 5 (rate por status) |
+| Latencia promedio | Panel 6 (`rate(_sum)/rate(_count)`) |
+| Latencia por percentiles (p50, p95, p99) | Panel 7 |
+| Número de errores | Panel 3 |
+| Tasa de error | Panel 4 |
+| Uso de CPU y memoria del pod | Paneles 8 y 9 (vía `process_*` de `prometheus_client`) |
 
 ---
 
@@ -534,8 +659,9 @@ Casos reales encontrados durante el despliegue y cómo se resolvieron.
 
 Cosas que quedan abiertas a criterio del equipo según el ambiente final:
 
-- Refinar `TARGET_COLUMN` y la lista de features según análisis exploratorio sobre el dataset modificado.
-- Exportar el dashboard final de Grafana con corridas reales de Locust (`Share → Export → Save to file`).
+- Refinar la lista de features según análisis exploratorio sobre el dataset modificado.
+- Exportar el dashboard final de Grafana con corridas reales de Locust para anexarlo como JSON al informe (`Share → Export → Save to file`).
 - Ajustar `replicas`, `requests` y `limits` según el clúster donde se sustente.
 - Sustituir credenciales por defecto por valores seguros (especialmente `MINIO_ROOT_PASSWORD`, `POSTGRES_PASSWORD`, `AIRFLOW_ADMIN_PASSWORD`).
 - Considerar empaquetar el despliegue como Helm chart si se quiere parametrizar por ambiente.
+- Grabar el video de sustentación (≤ 10 min, requisito 14 de los entregables).

@@ -1,0 +1,455 @@
+================================================================================
+  PROYECTO 2 - MLOps EN KUBERNETES (DIABETES 130-US)
+  Instrucciones de ejecucion y validacion punto a punto del enunciado
+  Documento de referencia: MLOPS_Proyecto2_2026.pdf
+================================================================================
+
+Convencion:
+  $   = comando que se ejecuta en la terminal
+  >>> = lo que se debe observar / verificar
+  Las rutas estan referidas a la raiz del repositorio. Si la carpeta tiene
+  espacio en el nombre ("Proyecto 2"), siempre va entre comillas.
+
+--------------------------------------------------------------------------------
+A. PRE-REQUISITOS
+--------------------------------------------------------------------------------
+
+  - Docker Desktop instalado y corriendo.
+  - kubectl >= 1.27.
+  - minikube >= 1.32 (probado con driver "docker").
+  - Python 3.11 (solo para correr el notebook de EDA fuera del cluster).
+  - Cuenta de DockerHub con permisos para subir imagenes a "innovacion/*"
+    (si vas a usar otro usuario, sustituye "innovacion" en cada comando y en
+    los manifiestos k8s/04-mlflow.yaml, 05-api.yaml, 06-streamlit.yaml,
+    07-airflow.yaml y 10-locust.yaml).
+
+  Verificacion rapida del entorno:
+
+  $ docker version
+  $ kubectl version --client
+  $ minikube version
+  $ docker login
+
+--------------------------------------------------------------------------------
+B. CONSTRUIR Y PUBLICAR IMAGENES (DockerHub)
+--------------------------------------------------------------------------------
+
+  Posicionate dentro de la carpeta del proyecto:
+
+  $ cd "Proyecto 2"
+
+  Construye las cinco imagenes propias. El contexto de build siempre es ".":
+
+  $ docker build -f mlflow/Dockerfile     -t innovacion/proyecto2-mlflow:latest    .
+  $ docker build -f api/Dockerfile        -t innovacion/proyecto2-api:v2           .
+  $ docker build -f streamlit/Dockerfile  -t innovacion/proyecto2-streamlit:latest .
+  $ docker build -f airflow/Dockerfile    -t innovacion/proyecto2-airflow:latest   .
+  $ docker build -f locust/Dockerfile     -t innovacion/proyecto2-locust:latest    .
+
+  Si Docker Desktop reporta "input/output error" o problemas con BuildKit,
+  fuerza el builder clasico:
+
+  $ DOCKER_BUILDKIT=0 docker build -f api/Dockerfile -t innovacion/proyecto2-api:v2 .
+
+  Publica todas en DockerHub:
+
+  $ docker push innovacion/proyecto2-mlflow:latest
+  $ docker push innovacion/proyecto2-api:v2
+  $ docker push innovacion/proyecto2-streamlit:latest
+  $ docker push innovacion/proyecto2-airflow:latest
+  $ docker push innovacion/proyecto2-locust:latest
+
+  >>> Verificalas en https://hub.docker.com/r/innovacion (Restriccion #13).
+
+--------------------------------------------------------------------------------
+C. LEVANTAR EL CLUSTER E INSTALAR LA SOLUCION
+--------------------------------------------------------------------------------
+
+  1) Inicia minikube con recursos suficientes:
+
+     $ minikube start --cpus=4 --memory=8192 --driver=docker
+     $ kubectl get nodes
+     >>> El nodo debe estar en STATUS=Ready.
+
+  2) Aplica todos los manifiestos con kustomize:
+
+     $ kubectl apply -k k8s
+
+     Esto crea, en orden:
+       - Namespace mlops-proyecto2
+       - ConfigMap proyecto2-config y Secret proyecto2-secrets
+       - StatefulSet postgres + Service + ConfigMap initdb + PVC
+       - Deployment minio + PVC + Service + Job create-mlflow-bucket
+       - Deployment mlflow + Service
+       - Deployment api (2 replicas) + Service
+       - Deployment streamlit + Service
+       - Job airflow-init + Deployment airflow-webserver + Deployment airflow-scheduler + Services
+       - Deployment prometheus + ConfigMap + Service
+       - Deployment grafana + 3 ConfigMaps + Service
+       - Deployment locust + Service
+
+  3) Espera a que todo este Running:
+
+     $ kubectl get pods -n mlops-proyecto2 -w
+
+     >>> Deben terminar todos en estado Running 1/1 (la API en 2/2),
+         airflow-init y create-mlflow-bucket en Completed.
+
+  4) Verifica los recursos creados:
+
+     $ kubectl get svc,deploy,statefulset,pvc,job,cm,secret -n mlops-proyecto2
+     >>> Cada componente tiene Service, requests/limits y probes (verificable
+         con: kubectl describe deploy/api -n mlops-proyecto2).
+
+--------------------------------------------------------------------------------
+D. EXPONER LAS UIs LOCALMENTE (port-forward)
+--------------------------------------------------------------------------------
+
+  En 7 terminales separadas (o usando &):
+
+  $ kubectl port-forward svc/airflow-webserver -n mlops-proyecto2 8080:8080
+  $ kubectl port-forward svc/mlflow            -n mlops-proyecto2 5000:5000
+  $ kubectl port-forward svc/streamlit         -n mlops-proyecto2 8501:8501
+  $ kubectl port-forward svc/grafana           -n mlops-proyecto2 3000:3000
+  $ kubectl port-forward svc/locust            -n mlops-proyecto2 8089:8089
+  $ kubectl port-forward svc/api               -n mlops-proyecto2 8000:8000
+  $ kubectl port-forward svc/minio             -n mlops-proyecto2 9001:9001
+
+  URLs y credenciales por defecto:
+    Airflow      http://127.0.0.1:8080   admin / admin123
+    MLflow       http://127.0.0.1:5000   (sin auth)
+    Streamlit    http://127.0.0.1:8501   (sin auth)
+    Grafana      http://127.0.0.1:3000   admin / admin123
+    Locust       http://127.0.0.1:8089   (sin auth)
+    API Swagger  http://127.0.0.1:8000/docs
+    MinIO        http://127.0.0.1:9001   minioadmin / minioadmin123
+
+--------------------------------------------------------------------------------
+E. BOOTSTRAP DEL PRIMER MODELO
+--------------------------------------------------------------------------------
+
+  La API arranca en estado "degraded" hasta que MLflow tenga un modelo
+  promovido. Para entrenar el primero:
+
+  1) Abre http://127.0.0.1:8080 (Airflow) e ingresa con admin/admin123.
+  2) Activa (un-pause) el DAG "mlops_diabetes_pipeline".
+  3) Disparalo manualmente con "Trigger DAG".
+  4) Espera a que las 6 tareas terminen en verde:
+       validate_source_file -> ingest_batch -> validate_batch
+         -> transform_and_clean -> split_dataset -> train_and_promote
+  5) Verifica en MLflow (http://127.0.0.1:5000):
+       - Experimento Proyecto2-Diabetes con runs (LogisticRegression y RandomForest).
+       - Registered Model: DiabetesReadmissionModel con alias "champion".
+  6) Llama:
+     $ curl http://127.0.0.1:8000/health
+     >>> {"status":"ok","model_loaded":true,...}
+
+================================================================================
+  VALIDACION PUNTO A PUNTO DEL ENUNCIADO MLOPS_Proyecto2_2026.pdf
+================================================================================
+
+--------------------------------------------------------------------------------
+F. SECCION 3.1 - CARGA Y PROCESAMIENTO DEL DATASET
+--------------------------------------------------------------------------------
+
+  Analisis exploratorio del dataset (notebook):
+
+  $ cd "Proyecto 2"
+  $ python -m venv .venv && source .venv/bin/activate
+  $ pip install -r training/requirements.txt jupyter matplotlib seaborn
+  $ jupyter notebook notebooks/01_eda.ipynb
+
+  >>> Se evidencian: nulos por columna, balance del target readmitted,
+      distribuciones, cardinalidades y conclusiones que justifican las
+      decisiones de feature engineering.
+
+  Descarga robusta desde Google Drive (cumple "confirm={{VALUE}}"):
+
+  $ kubectl exec -it deploy/airflow-scheduler -n mlops-proyecto2 -- \
+      python -c "import sys; sys.path.insert(0,'/opt/airflow/project/training/src'); \
+                 from pipeline import ensure_dataset_present; print(ensure_dataset_present())"
+  >>> Imprime /opt/project/data/Diabetes.csv (descargado solo la primera vez).
+
+--------------------------------------------------------------------------------
+G. SECCION 4.1 - DESPLIEGUE EN KUBERNETES
+--------------------------------------------------------------------------------
+
+  Verifica que cada componente tiene Deployment/StatefulSet, Service, ConfigMap,
+  Secret, PVC (donde aplique), probes y requests/limits:
+
+  $ kubectl get deploy,statefulset,svc,cm,secret,pvc -n mlops-proyecto2
+  $ kubectl describe deploy/api          -n mlops-proyecto2 | grep -E "Limits|Requests|Liveness|Readiness"
+  $ kubectl describe statefulset/postgres -n mlops-proyecto2 | grep -E "Limits|Requests|Liveness|Readiness"
+  $ kubectl describe deploy/mlflow       -n mlops-proyecto2 | grep -E "Limits|Requests"
+  $ kubectl describe deploy/grafana      -n mlops-proyecto2 | grep -E "Limits|Requests"
+
+  >>> Cumple Restricciones #1, #12 y #13 del enunciado.
+
+--------------------------------------------------------------------------------
+H. SECCION 4.2 - DAG DE AIRFLOW
+--------------------------------------------------------------------------------
+
+  En la UI de Airflow (http://127.0.0.1:8080) entrar al DAG
+  "mlops_diabetes_pipeline" y mostrar:
+
+  - Vista Graph: 6 tareas independientes encadenadas
+      validate_source_file -> ingest_batch -> validate_batch
+        -> transform_and_clean -> split_dataset -> train_and_promote
+  - Pestania "Code": ver que el DAG llama a las funciones del pipeline.
+  - Run history: al menos una ejecucion exitosa.
+  - Reejecucion idempotente: disparar el DAG dos veces seguidas.
+      >>> La segunda corrida falla en validate_batch con
+          "No hay nuevos registros para procesar" porque row_hash
+          deduplica los lotes (cumple Requisito 9 de 4.2: idempotencia).
+
+  Lotes de maximo 15.000 registros:
+
+  $ kubectl exec -it postgres-0 -n mlops-proyecto2 -- \
+      psql -U mlops mlops_data -c "SELECT batch_id, COUNT(*) FROM raw_data GROUP BY batch_id ORDER BY batch_id;"
+  >>> Cada batch_id tiene <= 15000 filas (BATCH_SIZE configurable).
+
+  Comparacion contra modelos anteriores:
+    >>> En el detalle del run en Airflow, la tarea train_and_promote retorna
+        previous_champion_metric, candidate_metric y promoted (true/false).
+
+--------------------------------------------------------------------------------
+I. SECCION 4.3 - SEPARACION DE CAPAS DE DATOS
+--------------------------------------------------------------------------------
+
+  Conexion a Postgres dentro del cluster:
+
+  $ kubectl exec -it postgres-0 -n mlops-proyecto2 -- psql -U mlops -d mlops_data
+
+  Dentro de psql validar las tres capas:
+
+  mlops_data=# \dt
+  mlops_data=# SELECT batch_id, source_file, status, load_timestamp FROM raw_data LIMIT 5;
+  mlops_data=# SELECT processed_at, target_value FROM clean_data LIMIT 5;
+  mlops_data=# SELECT request_id, model_name, model_version, model_alias, score, response_time_ms,
+                      inference_timestamp FROM inference_logs ORDER BY inference_timestamp DESC LIMIT 5;
+
+  >>> raw_data tiene batch_id, load_timestamp, source_file, status, row_hash.
+  >>> clean_data tiene processed_at, row_hash, features, target_value.
+  >>> inference_logs tiene todos los campos exigidos.
+
+--------------------------------------------------------------------------------
+J. SECCION 5.1 - FASE DE ENTRENAMIENTO (MLflow + MinIO)
+--------------------------------------------------------------------------------
+
+  En MLflow UI (http://127.0.0.1:5000):
+
+  - Experimento "Proyecto2-Diabetes" con uno o mas runs.
+  - Cada run muestra: parametros (model_name, target_column, feature_columns),
+    metricas (val_recall, val_precision, val_f1, val_roc_auc, test_*),
+    artefactos (modelo serializado, feature_columns.json) y signature.
+  - "Models" -> "DiabetesReadmissionModel" -> version con alias "champion"
+    (o stage Production segun version de MLflow).
+
+  Verifica el artifact store en MinIO (http://127.0.0.1:9001):
+
+  - Login con minioadmin/minioadmin123.
+  - Bucket "mlflow-artifacts" con la carpeta del experimento y subcarpetas
+    "model/" por cada run.
+
+  Backend de metadatos en Postgres (no SQLite):
+
+  $ kubectl exec -it postgres-0 -n mlops-proyecto2 -- \
+      psql -U mlops -d mlflow_meta -c "\dt"
+  >>> Lista las tablas de MLflow (experiments, runs, metrics, model_versions, ...).
+
+--------------------------------------------------------------------------------
+K. SECCION 5.2 / 6.6 - API DE INFERENCIA
+--------------------------------------------------------------------------------
+
+  Endpoint /health:
+
+  $ curl http://127.0.0.1:8000/health
+  >>> {"status":"ok","model_loaded":true,"model_name":"DiabetesReadmissionModel",...}
+
+  Endpoint /model-info:
+
+  $ curl http://127.0.0.1:8000/model-info
+  >>> {"model_name":"...","model_version":"3","model_alias":"champion","model_uri":"models:/.../champion"}
+
+  Endpoint /predict (carga dinamica del modelo desde MLflow):
+
+  $ curl -X POST http://127.0.0.1:8000/predict \
+      -H "Content-Type: application/json" \
+      -d '{"features":{"race":"Caucasian","gender":"Female","age":"[60-70)","admission_type_id":1,"discharge_disposition_id":1,"admission_source_id":7,"time_in_hospital":4,"num_lab_procedures":44,"num_procedures":1,"num_medications":11,"number_outpatient":0,"number_emergency":0,"number_inpatient":0,"diag_1":"250.83","diag_2":"276","diag_3":"414","A1Cresult":">7","insulin":"Up","change":"Ch","diabetesMed":"Yes"}}'
+  >>> Devuelve prediction, score, model_name, model_version, model_alias y processing_time_ms.
+
+  Endpoint /metrics:
+
+  $ curl http://127.0.0.1:8000/metrics | head -40
+  >>> Salida en formato Prometheus con api_requests_total, api_request_latency_seconds_*
+      y process_cpu_seconds_total / process_resident_memory_bytes.
+
+  Verifica que la inferencia quedo persistida:
+
+  $ kubectl exec -it postgres-0 -n mlops-proyecto2 -- \
+      psql -U mlops -d mlops_data -c "SELECT request_id, prediction, score, response_time_ms FROM inference_logs ORDER BY inference_timestamp DESC LIMIT 5;"
+  >>> El ultimo request_id coincide con el devuelto por /predict.
+
+--------------------------------------------------------------------------------
+L. SECCION 6.7 - INTERFAZ STREAMLIT
+--------------------------------------------------------------------------------
+
+  Abrir http://127.0.0.1:8501 y demostrar:
+
+  1) Boton "Cargar ejemplo" -> carga SAMPLE_PAYLOAD en el editor JSON.
+  2) Boton "Consultar modelo" -> muestra version y alias del modelo (via /model-info).
+  3) Boton "Enviar prediccion" -> imprime la respuesta de /predict.
+  4) Editar el JSON dejandolo invalido -> aparece error de validacion.
+  5) (Opcional) detener temporalmente la API y mostrar el manejo de error HTTP.
+
+  >>> La interfaz NUNCA habla directo con MLflow ni con la base de datos
+      (cumple Restriccion del enunciado de seccion 6.7).
+
+--------------------------------------------------------------------------------
+M. SECCION 5.3 / 6.8 - PRUEBAS DE CARGA CON LOCUST
+--------------------------------------------------------------------------------
+
+  1) Abrir http://127.0.0.1:8089 (Locust).
+  2) Configurar:
+        - Number of users:  50  (o subir gradualmente: 10, 50, 100, 200)
+        - Spawn rate:       5
+        - Host:             http://api:8000
+  3) Iniciar test "Start swarming".
+  4) Mientras corre, abrir Grafana en otra pestania (siguiente seccion) y
+     observar como suben RPS, latencia y errores.
+  5) Reportar al cierre: total requests, exitosos, fallidos, latencia avg,
+     percentiles p50/p95/p99 y punto aproximado de degradacion.
+
+  Detener desde la UI cuando los percentiles se estabilicen.
+
+--------------------------------------------------------------------------------
+N. SECCION 6.9 - PROMETHEUS Y GRAFANA
+--------------------------------------------------------------------------------
+
+  Prometheus (http://127.0.0.1:9090 si haces port-forward de prometheus):
+
+  $ kubectl port-forward svc/prometheus -n mlops-proyecto2 9090:9090
+
+  - Status -> Targets: el job "api" debe aparecer como UP.
+  - Probar consultas:
+      sum(api_requests_total)
+      rate(api_requests_total{endpoint="/predict"}[1m])
+      histogram_quantile(0.95, sum(rate(api_request_latency_seconds_bucket[5m])) by (le))
+
+  Grafana (http://127.0.0.1:3000):
+
+  - Login admin/admin123.
+  - Dashboards -> Proyecto2 -> "Proyecto 2 API Dashboard".
+  - Verificar los 9 paneles:
+      1. Solicitudes totales
+      2. Predicciones exitosas
+      3. Errores totales
+      4. Tasa de error (1m)
+      5. Requests/segundo /predict por status
+      6. Latencia promedio /predict
+      7. Latencia p50 / p95 / p99
+      8. CPU del pod API (cores)
+      9. Memoria del pod API (RSS)
+
+  Durante la prueba de Locust: los paneles deben moverse en vivo (auto-refresh 5s).
+
+  Para exportar el dashboard como entregable JSON:
+      Dashboard settings -> JSON Model -> copiar/guardar.
+
+--------------------------------------------------------------------------------
+O. RESTRICCIONES Y CONDICIONES DE ACEPTACION (SECCION 9 DEL PDF)
+--------------------------------------------------------------------------------
+
+  Recorrido rapido punto por punto:
+
+  #1  Desplegado en Kubernetes:
+        $ kubectl get all -n mlops-proyecto2
+
+  #2  DAG con varias tareas independientes:
+        UI de Airflow -> 6 tareas en el grafo.
+
+  #3  Datos crudos y procesados en tablas separadas:
+        SQL de seccion I (raw_data y clean_data).
+
+  #4  Carga por lotes (no de una sola vez):
+        SELECT batch_id, COUNT(*) FROM raw_data GROUP BY batch_id;
+        >>> Cada batch_id tiene <= 15000 filas.
+
+  #5  MLflow con backend y artifact store externos (no SQLite):
+        $ kubectl exec -it postgres-0 -n mlops-proyecto2 -- psql -U mlops -d mlflow_meta -c "\dt"
+        + bucket "mlflow-artifacts" en MinIO.
+
+  #6  El modelo de la API proviene de MLflow:
+        $ curl http://127.0.0.1:8000/model-info
+        >>> model_uri = "models:/DiabetesReadmissionModel@champion"
+
+  #7  La API no tiene ruta local quemada:
+        En api/app/main.py funcion resolve_model_uri() consulta MLflow.
+
+  #8  Cada inferencia queda registrada en BD:
+        SELECT COUNT(*) FROM inference_logs;
+        >>> Crece con cada request a /predict.
+
+  #9  La API expone /metrics:
+        curl http://127.0.0.1:8000/metrics
+
+  #10 Prometheus recolecta metricas de la API:
+        Prometheus -> Targets -> job "api" UP.
+
+  #11 Grafana muestra el efecto de Locust:
+        Dashboard moviendose durante el "swarm" (seccion M y N).
+
+  #12 Cada contenedor define requests y limits:
+        kubectl describe deploy/api -n mlops-proyecto2 | grep -E "Limits|Requests"
+
+  #13 Imagenes propias en registro publico:
+        https://hub.docker.com/r/innovacion/proyecto2-api  (y las otras 4).
+
+--------------------------------------------------------------------------------
+P. APAGAR / LIMPIAR
+--------------------------------------------------------------------------------
+
+  Eliminar solo los recursos del proyecto (preserva minikube):
+
+  $ kubectl delete -k k8s
+
+  Detener minikube:
+
+  $ minikube stop
+
+  Borrar todo (incluido el cluster local):
+
+  $ minikube delete
+
+--------------------------------------------------------------------------------
+Q. TROUBLESHOOTING RAPIDO
+--------------------------------------------------------------------------------
+
+  - "input/output error" en docker build:
+      DOCKER_BUILDKIT=0 docker build ...      o reiniciar Docker Desktop.
+
+  - "connection to server at 'postgres' refused" en Airflow:
+      Las imagenes ya esperan a Postgres con un loop tcp; si persiste:
+      $ kubectl rollout restart deploy/airflow-webserver deploy/airflow-scheduler -n mlops-proyecto2
+
+  - "RuntimeError: No registered versions found for model 'DiabetesReadmissionModel'":
+      Aun no se ha entrenado. Disparar el DAG en Airflow.
+
+  - La API sigue mostrando codigo viejo:
+      Subir un tag nuevo (api:v3), actualizar k8s/05-api.yaml y:
+      $ kubectl rollout restart deploy/api -n mlops-proyecto2
+
+  - El Job airflow-init falla con "field is immutable":
+      $ kubectl delete job airflow-init -n mlops-proyecto2
+      $ kubectl apply -f k8s/07-airflow.yaml
+
+  - PVC en Pending:
+      $ kubectl describe pvc -n mlops-proyecto2
+      Verificar que minikube tiene el storage class default activo.
+
+================================================================================
+  FIN
+  Si todos los pasos de F a O se ejecutan en orden y muestran lo indicado en
+  los bloques ">>>", la solucion cumple los 13 criterios de aceptacion del
+  enunciado MLOPS_Proyecto2_2026.pdf.
+================================================================================
