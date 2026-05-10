@@ -4,12 +4,6 @@
   Documento de referencia: MLOPS_Proyecto2_2026.pdf
 ================================================================================
 
-Convencion:
-  $   = comando que se ejecuta en la terminal
-  >>> = lo que se debe observar / verificar
-  Las rutas estan referidas a la raiz del repositorio. Si la carpeta tiene
-  espacio en el nombre ("Proyecto 2"), siempre va entre comillas.
-
 --------------------------------------------------------------------------------
 A. PRE-REQUISITOS
 --------------------------------------------------------------------------------
@@ -107,7 +101,18 @@ D. EXPONER LAS UIs LOCALMENTE (port-forward)
 
   En 7 terminales separadas (o usando &):
 
-  $ kubectl port-forward svc/airflow-webserver -n mlops-proyecto2 8080:8080
+$ kubectl port-forward svc/airflow-webserver -n mlops-proyecto2 8080:8080 > airflow-portforward.log 2>&1 &
+$ kubectl port-forward svc/mlflow -n mlops-proyecto2 5000:5000 > mlflow-portforward.log 2>&1 &
+$ kubectl port-forward svc/streamlit -n mlops-proyecto2 8501:8501 > streamlit-portforward.log 2>&1 &
+$ kubectl port-forward svc/grafana -n mlops-proyecto2 3000:3000 > grafana-portforward.log 2>&1 &
+$ kubectl port-forward svc/locust -n mlops-proyecto2 8089:8089 > locust-portforward.log 2>&1 &
+$ kubectl port-forward svc/api -n mlops-proyecto2 8000:8000 > api-portforward.log 2>&1 &
+$ kubectl port-forward svc/minio -n mlops-proyecto2 9001:9001 > minio-portforward.log 2>&1 &
+
+ 
+ 
+ 
+ 
   $ kubectl port-forward svc/mlflow            -n mlops-proyecto2 5000:5000
   $ kubectl port-forward svc/streamlit         -n mlops-proyecto2 8501:8501
   $ kubectl port-forward svc/grafana           -n mlops-proyecto2 3000:3000
