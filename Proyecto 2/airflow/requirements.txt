@@ -2,6 +2,6 @@ pandas
 requests
 gdown
 scikit-learn
-mlflow
+mlflow==2.17.2
 sqlalchemy
 psycopg2-binary
