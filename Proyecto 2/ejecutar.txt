@@ -109,16 +109,7 @@ $ kubectl port-forward svc/locust -n mlops-proyecto2 8089:8089 > locust-portforw
 $ kubectl port-forward svc/api -n mlops-proyecto2 8000:8000 > api-portforward.log 2>&1 &
 $ kubectl port-forward svc/minio -n mlops-proyecto2 9001:9001 > minio-portforward.log 2>&1 &
 
- 
- 
- 
- 
-  $ kubectl port-forward svc/mlflow            -n mlops-proyecto2 5000:5000
-  $ kubectl port-forward svc/streamlit         -n mlops-proyecto2 8501:8501
-  $ kubectl port-forward svc/grafana           -n mlops-proyecto2 3000:3000
-  $ kubectl port-forward svc/locust            -n mlops-proyecto2 8089:8089
-  $ kubectl port-forward svc/api               -n mlops-proyecto2 8000:8000
-  $ kubectl port-forward svc/minio             -n mlops-proyecto2 9001:9001
+
 
   URLs y credenciales por defecto:
     Airflow      http://127.0.0.1:8080   admin / admin123
