@@ -4,6 +4,42 @@
   Documento de referencia: MLOPS_Proyecto2_2026.pdf
 ================================================================================
 
+  EL ARCHIVO TIENE DOS FASES, CADA UNA CON UN PROPOSITO DISTINTO.
+  Lee este indice antes de empezar:
+
+  FASE 1 - DESPLIEGUE (acciones reales; ejecutar UNA sola vez en orden)
+    A. Pre-requisitos
+    B. Construir y publicar imagenes en DockerHub
+    C. Levantar el cluster e instalar la solucion
+    D. Exponer las UIs localmente (port-forward)
+    E. Bootstrap del primer modelo (correr el DAG por primera vez)
+
+  FASE 2 - VALIDACIONES (NO redespliegan nada; sirven para sustentar)
+    F. VALIDAR Sec. 3.1 del PDF - dataset y EDA
+    G. VALIDAR Sec. 4.1 del PDF - recursos K8s correctos
+    H. VALIDAR Sec. 4.2 del PDF - DAG de Airflow
+    I. VALIDAR Sec. 4.3 del PDF - capas de datos separadas
+    J. VALIDAR Sec. 5.1 del PDF - entrenamiento y MLflow
+    K. VALIDAR Sec. 5.2 / 6.6 del PDF - API de inferencia
+    L. VALIDAR Sec. 6.7 del PDF - interfaz Streamlit
+    M. VALIDAR Sec. 5.3 / 6.8 del PDF - pruebas de carga con Locust
+    N. VALIDAR Sec. 6.9 del PDF - Prometheus y Grafana
+    O. VALIDAR Sec. 9 del PDF - 13 restricciones de aceptacion
+
+  EXTRAS:
+    P. Apagar / limpiar
+    Q. Troubleshooting rapido
+
+  Convencion:
+    $   = comando que se ejecuta en la terminal
+    >>> = lo que se debe observar / verificar
+    Las rutas son relativas a la raiz del repositorio. Si la carpeta tiene
+    espacio en el nombre ("Proyecto 2"), siempre va entre comillas.
+
+================================================================================
+  FASE 1 - DESPLIEGUE
+================================================================================
+
 --------------------------------------------------------------------------------
 A. PRE-REQUISITOS
 --------------------------------------------------------------------------------
@@ -141,11 +177,21 @@ E. BOOTSTRAP DEL PRIMER MODELO
      >>> {"status":"ok","model_loaded":true,...}
 
 ================================================================================
-  VALIDACION PUNTO A PUNTO DEL ENUNCIADO MLOPS_Proyecto2_2026.pdf
+  >>> A PARTIR DE AQUI YA NO SE DESPLIEGA NADA <<<
+
+  Los bloques F al O son SOLO COMANDOS DE VERIFICACION para mostrar en la
+  sustentacion que la solucion (ya desplegada en los pasos A-E) cumple cada
+  requisito del enunciado MLOPS_Proyecto2_2026.pdf.
+
+  Cada titulo "VALIDAR (Sec. X del PDF)" se refiere a la seccion del PDF que
+  ese bloque demuestra, NO a un nuevo paso de despliegue.
+
+  Si solo quieres dejar la solucion corriendo, puedes detenerte despues del
+  bloque E.
 ================================================================================
 
 --------------------------------------------------------------------------------
-F. SECCION 3.1 - CARGA Y PROCESAMIENTO DEL DATASET
+F. VALIDAR (Sec. 3.1 del PDF) - Carga y procesamiento del dataset
 --------------------------------------------------------------------------------
 
   Analisis exploratorio del dataset (notebook):
@@ -167,11 +213,13 @@ F. SECCION 3.1 - CARGA Y PROCESAMIENTO DEL DATASET
   >>> Imprime /opt/project/data/Diabetes.csv (descargado solo la primera vez).
 
 --------------------------------------------------------------------------------
-G. SECCION 4.1 - DESPLIEGUE EN KUBERNETES
+G. VALIDAR (Sec. 4.1 del PDF) - Recursos K8s correctamente declarados
 --------------------------------------------------------------------------------
 
-  Verifica que cada componente tiene Deployment/StatefulSet, Service, ConfigMap,
-  Secret, PVC (donde aplique), probes y requests/limits:
+  NO redespliega. Solo verifica que el despliegue hecho en el bloque C cumple
+  la Seccion 4.1 del enunciado: cada componente debe tener Deployment o
+  StatefulSet, Service, ConfigMap, Secret, PVC (donde aplique), probes y
+  requests/limits.
 
   $ kubectl get deploy,statefulset,svc,cm,secret,pvc -n mlops-proyecto2
   $ kubectl describe deploy/api          -n mlops-proyecto2 | grep -E "Limits|Requests|Liveness|Readiness"
@@ -182,7 +230,7 @@ G. SECCION 4.1 - DESPLIEGUE EN KUBERNETES
   >>> Cumple Restricciones #1, #12 y #13 del enunciado.
 
 --------------------------------------------------------------------------------
-H. SECCION 4.2 - DAG DE AIRFLOW
+H. VALIDAR (Sec. 4.2 del PDF) - DAG de Airflow funcionando
 --------------------------------------------------------------------------------
 
   En la UI de Airflow (http://127.0.0.1:8080) entrar al DAG
@@ -209,7 +257,7 @@ H. SECCION 4.2 - DAG DE AIRFLOW
         previous_champion_metric, candidate_metric y promoted (true/false).
 
 --------------------------------------------------------------------------------
-I. SECCION 4.3 - SEPARACION DE CAPAS DE DATOS
+I. VALIDAR (Sec. 4.3 del PDF) - Separacion de capas de datos
 --------------------------------------------------------------------------------
 
   Conexion a Postgres dentro del cluster:
@@ -229,7 +277,7 @@ I. SECCION 4.3 - SEPARACION DE CAPAS DE DATOS
   >>> inference_logs tiene todos los campos exigidos.
 
 --------------------------------------------------------------------------------
-J. SECCION 5.1 - FASE DE ENTRENAMIENTO (MLflow + MinIO)
+J. VALIDAR (Sec. 5.1 del PDF) - Fase de entrenamiento (MLflow + MinIO)
 --------------------------------------------------------------------------------
 
   En MLflow UI (http://127.0.0.1:5000):
@@ -254,7 +302,7 @@ J. SECCION 5.1 - FASE DE ENTRENAMIENTO (MLflow + MinIO)
   >>> Lista las tablas de MLflow (experiments, runs, metrics, model_versions, ...).
 
 --------------------------------------------------------------------------------
-K. SECCION 5.2 / 6.6 - API DE INFERENCIA
+K. VALIDAR (Sec. 5.2 / 6.6 del PDF) - API de inferencia
 --------------------------------------------------------------------------------
 
   Endpoint /health:
@@ -287,7 +335,7 @@ K. SECCION 5.2 / 6.6 - API DE INFERENCIA
   >>> El ultimo request_id coincide con el devuelto por /predict.
 
 --------------------------------------------------------------------------------
-L. SECCION 6.7 - INTERFAZ STREAMLIT
+L. VALIDAR (Sec. 6.7 del PDF) - Interfaz Streamlit
 --------------------------------------------------------------------------------
 
   Abrir http://127.0.0.1:8501 y demostrar:
@@ -302,7 +350,7 @@ L. SECCION 6.7 - INTERFAZ STREAMLIT
       (cumple Restriccion del enunciado de seccion 6.7).
 
 --------------------------------------------------------------------------------
-M. SECCION 5.3 / 6.8 - PRUEBAS DE CARGA CON LOCUST
+M. VALIDAR (Sec. 5.3 / 6.8 del PDF) - Pruebas de carga con Locust
 --------------------------------------------------------------------------------
 
   1) Abrir http://127.0.0.1:8089 (Locust).
@@ -319,7 +367,7 @@ M. SECCION 5.3 / 6.8 - PRUEBAS DE CARGA CON LOCUST
   Detener desde la UI cuando los percentiles se estabilicen.
 
 --------------------------------------------------------------------------------
-N. SECCION 6.9 - PROMETHEUS Y GRAFANA
+N. VALIDAR (Sec. 6.9 del PDF) - Prometheus y Grafana
 --------------------------------------------------------------------------------
 
   Prometheus (http://127.0.0.1:9090 si haces port-forward de prometheus):
@@ -353,7 +401,7 @@ N. SECCION 6.9 - PROMETHEUS Y GRAFANA
       Dashboard settings -> JSON Model -> copiar/guardar.
 
 --------------------------------------------------------------------------------
-O. RESTRICCIONES Y CONDICIONES DE ACEPTACION (SECCION 9 DEL PDF)
+O. VALIDAR (Sec. 9 del PDF) - 13 restricciones y condiciones de aceptacion
 --------------------------------------------------------------------------------
 
   Recorrido rapido punto por punto:
