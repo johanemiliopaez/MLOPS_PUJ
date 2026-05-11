@@ -657,6 +657,8 @@ Mapeo punto a punto contra `MLOPS_Proyecto2_2026.pdf`:
 <center>
 <img width="1470" height="431" alt="image" src="https://github.com/user-attachments/assets/9caa44ad-e106-4eee-b436-d08dfc9b8a11" />
 <img width="1704" height="952" alt="image" src="https://github.com/user-attachments/assets/2574bd36-f32a-4ce1-8088-b325dce0b1b8" />
+  <img width="1700" height="948" alt="image" src="https://github.com/user-attachments/assets/1eae88e0-a7d2-41e2-a892-f381d9125f02" />
+
 </center>
 
 ### Dashboard mínimo de Grafana (sección 5.3)
