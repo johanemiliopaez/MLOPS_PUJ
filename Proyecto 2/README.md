@@ -453,6 +453,10 @@ kubectl get pvc  -n mlops-proyecto2
 ```
 
 Estado esperado: todos los pods en `Running 1/1` (o `2/2` para `api`), y los Jobs (`airflow-init`, `create-mlflow-bucket`) en `Completed`.
+<center><img width="736" height="214" alt="image" src="https://github.com/user-attachments/assets/9874c29f-b16d-4295-9e18-28e1dad16e35" />
+</center>
+
+
 
 ---
 
