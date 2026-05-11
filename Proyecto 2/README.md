@@ -654,6 +654,11 @@ Mapeo punto a punto contra `MLOPS_Proyecto2_2026.pdf`:
 | Escenario contra `/predict` | `InferenceUser` con tareas `predict` y `health` |
 | Métricas reportadas (usuarios, spawn rate, totales, fallidas, latencias, percentiles) | Provistas por la UI nativa de Locust en `:8089` |
 
+<center>
+<img width="1470" height="431" alt="image" src="https://github.com/user-attachments/assets/9caa44ad-e106-4eee-b436-d08dfc9b8a11" />
+<img width="1704" height="952" alt="image" src="https://github.com/user-attachments/assets/2574bd36-f32a-4ce1-8088-b325dce0b1b8" />
+</center>
+
 ### Dashboard mínimo de Grafana (sección 5.3)
 
 | Métrica exigida | Panel del dashboard |
