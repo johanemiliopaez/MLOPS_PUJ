@@ -517,6 +517,15 @@ Hasta que el DAG no haya corrido al menos una vez, la API responde `status=degra
 5. Verificar en MLflow que existe el modelo `DiabetesReadmissionModel` con alias `champion`.
 6. Llamar `GET /health` → `status=ok` y `model_loaded=true`.
 
+<center>
+<img width="1473" height="802" alt="image" src="https://github.com/user-attachments/assets/dc0db233-f3e1-421d-afa3-b75211d5d391" />
+</center>
+
+<center>
+<img width="1475" height="449" alt="image" src="https://github.com/user-attachments/assets/c750dfbc-05c9-4c59-917a-edab509793de" />
+</center>
+
+
 ---
 
 ## Variables y secretos
