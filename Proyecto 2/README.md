@@ -69,7 +69,7 @@ Todo corre dentro del namespace `mlops-proyecto2` y se comunica por nombres de s
 | `minio` | `minio/minio:RELEASE.2024-10-02T17-50-41Z` | Object store compatible con S3 para artefactos de MLflow. |
 | `mlflow` | `innovacion/proyecto2-mlflow:latest` | Tracking server + Model Registry, con backend en PostgreSQL y artifact store en MinIO. |
 | `airflow` | `innovacion/proyecto2-airflow:latest` | `webserver` + `scheduler` + `Job` de inicialización; orquesta el pipeline. |
-| `api` | `innovacion/proyecto2-api:v2` | FastAPI: `/health`, `/predict`, `/model-info`, `/metrics`. Carga el modelo productivo desde MLflow. |
+| `api` | `innovacion/proyecto2-api:latest` | FastAPI: `/health`, `/predict`, `/model-info`, `/metrics`. Carga el modelo productivo desde MLflow. |
 | `streamlit` | `innovacion/proyecto2-streamlit:latest` | UI para enviar payloads a `/predict` y consultar el modelo. |
 | `locust` | `innovacion/proyecto2-locust:latest` | Generador de carga contra `/predict` y `/health`. |
 | `prometheus` | `prom/prometheus:v2.54.1` | Scrapea `/metrics` de la API. |
@@ -408,7 +408,7 @@ docker push innovacion/proyecto2-airflow:latest
 docker push innovacion/proyecto2-locust:latest
 ```
 
-> El deployment de la API actualmente apunta a `innovacion/proyecto2-api:v2` con `imagePullPolicy: Always`. Cuando publiques una versión nueva, retaggea (`docker tag .. :v3 && docker push`) y actualiza `k8s/05-api.yaml` para forzar el rollout. Esto evita el problema clásico de seguir corriendo una imagen vieja con la misma etiqueta `:latest` en cache.
+> El deployment de la API usa `innovacion/proyecto2-api:latest` con `imagePullPolicy: Always`. Si en algún despliegue ves que sigue corriendo código viejo (caché por digest), retaggea con un sufijo (`docker tag .. :v2 && docker push`) y actualiza `k8s/05-api.yaml` para forzar el rollout.
 
 ---
 

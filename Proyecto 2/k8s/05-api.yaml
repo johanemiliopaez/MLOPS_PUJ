@@ -27,7 +27,7 @@ spec:
     spec:
       containers:
         - name: api
-          image: docker.io/innovacion/proyecto2-api:v2
+          image: docker.io/innovacion/proyecto2-api:latest
           imagePullPolicy: Always
           envFrom:
             - configMapRef:

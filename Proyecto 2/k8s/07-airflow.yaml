@@ -22,7 +22,7 @@ spec:
       containers:
         - name: airflow-init
           image: docker.io/innovacion/proyecto2-airflow:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           envFrom:
             - configMapRef:
                 name: proyecto2-config
@@ -70,7 +70,7 @@ spec:
       containers:
         - name: airflow-webserver
           image: docker.io/innovacion/proyecto2-airflow:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           envFrom:
             - configMapRef:
                 name: proyecto2-config
@@ -128,7 +128,7 @@ spec:
       containers:
         - name: airflow-scheduler
           image: docker.io/innovacion/proyecto2-airflow:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           envFrom:
             - configMapRef:
                 name: proyecto2-config

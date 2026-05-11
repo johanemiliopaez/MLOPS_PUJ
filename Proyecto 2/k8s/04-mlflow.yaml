@@ -28,7 +28,7 @@ spec:
       containers:
         - name: mlflow
           image: docker.io/innovacion/proyecto2-mlflow:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           command:
             - /bin/sh
             - -c

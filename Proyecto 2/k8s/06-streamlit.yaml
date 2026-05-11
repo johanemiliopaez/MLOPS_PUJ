@@ -28,7 +28,7 @@ spec:
       containers:
         - name: streamlit
           image: docker.io/innovacion/proyecto2-streamlit:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           envFrom:
             - configMapRef:
                 name: proyecto2-config

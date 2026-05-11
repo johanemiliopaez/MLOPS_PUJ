@@ -7,6 +7,9 @@
   EL ARCHIVO TIENE DOS FASES, CADA UNA CON UN PROPOSITO DISTINTO.
   Lee este indice antes de empezar:
 
+  FASE 0 - RESET COMPLETO (si vienes de un intento previo, hazlo SIEMPRE)
+    0. Limpieza de cluster, contenedores, imagenes y disco
+
   FASE 1 - DESPLIEGUE (acciones reales; ejecutar UNA sola vez en orden)
     A. Pre-requisitos
     B. Construir y publicar imagenes en DockerHub
@@ -35,6 +38,44 @@
     >>> = lo que se debe observar / verificar
     Las rutas son relativas a la raiz del repositorio. Si la carpeta tiene
     espacio en el nombre ("Proyecto 2"), siempre va entre comillas.
+
+================================================================================
+  FASE 0 - RESET COMPLETO (saltala SOLO si es la primera vez)
+================================================================================
+
+--------------------------------------------------------------------------------
+0. LIMPIAR CUALQUIER INTENTO PREVIO
+--------------------------------------------------------------------------------
+
+  Si ya intentaste correr la solucion antes (o tienes minikube con otra config)
+  ejecuta estos pasos para arrancar desde cero. Saltatelos solo en una maquina
+  totalmente limpia.
+
+  0.1) Borrar el cluster de minikube (recursos, volumenes y todo el estado):
+
+       $ minikube delete
+
+  0.2) Liberar disco en Docker Desktop. Importante porque las imagenes pesan
+       varios GB:
+
+       $ docker system prune -a --volumes -f
+
+  0.3) Subir los recursos asignados a Docker Desktop:
+       Docker Desktop -> Settings -> Resources:
+         - CPUs:                 4 (minimo)
+         - Memory:               8 GB (minimo)
+         - Disk image size:      80 GB (recomendado)
+       Aplica los cambios y deja que Docker reinicie.
+
+  0.4) Verificar que docker tiene espacio:
+
+       $ docker system df
+       >>> Reclaimable debe ser bajo. Si quedo > 60% en uso, repite 0.2.
+
+  0.5) (Opcional pero recomendado) Borrar imagenes propias para forzar rebuild:
+
+       $ docker rmi -f $(docker images "innovacion/proyecto2-*" -q) 2>/dev/null
+       $ echo done
 
 ================================================================================
   FASE 1 - DESPLIEGUE
@@ -71,7 +112,7 @@ B. CONSTRUIR Y PUBLICAR IMAGENES (DockerHub)
   Construye las cinco imagenes propias. El contexto de build siempre es ".":
 
   $ docker build -f mlflow/Dockerfile     -t innovacion/proyecto2-mlflow:latest    .
-  $ docker build -f api/Dockerfile        -t innovacion/proyecto2-api:v2           .
+  $ docker build -f api/Dockerfile        -t innovacion/proyecto2-api:latest       .
   $ docker build -f streamlit/Dockerfile  -t innovacion/proyecto2-streamlit:latest .
   $ docker build -f airflow/Dockerfile    -t innovacion/proyecto2-airflow:latest   .
   $ docker build -f locust/Dockerfile     -t innovacion/proyecto2-locust:latest    .
@@ -79,27 +120,36 @@ B. CONSTRUIR Y PUBLICAR IMAGENES (DockerHub)
   Si Docker Desktop reporta "input/output error" o problemas con BuildKit,
   fuerza el builder clasico:
 
-  $ DOCKER_BUILDKIT=0 docker build -f api/Dockerfile -t innovacion/proyecto2-api:v2 .
+  $ DOCKER_BUILDKIT=0 docker build -f api/Dockerfile -t innovacion/proyecto2-api:latest .
 
-  Publica todas en DockerHub:
+  Publica todas en DockerHub (necesitas haber hecho 'docker login' antes):
 
   $ docker push innovacion/proyecto2-mlflow:latest
-  $ docker push innovacion/proyecto2-api:v2
+  $ docker push innovacion/proyecto2-api:latest
   $ docker push innovacion/proyecto2-streamlit:latest
   $ docker push innovacion/proyecto2-airflow:latest
   $ docker push innovacion/proyecto2-locust:latest
 
   >>> Verificalas en https://hub.docker.com/r/innovacion (Restriccion #13).
 
+  IMPORTANTE: las imagenes incluyen el pin "mlflow==2.17.2" en sus
+  requirements.txt. Si reutilizas imagenes viejas que no tienen el pin, el
+  task train_and_promote fallara con un 404 al endpoint
+  /api/2.0/mlflow/logged-models. Por eso es importante hacer el build limpio
+  despues del docker system prune del paso 0.
+
 --------------------------------------------------------------------------------
 C. LEVANTAR EL CLUSTER E INSTALAR LA SOLUCION
 --------------------------------------------------------------------------------
 
-  1) Inicia minikube con recursos suficientes:
+  1) Inicia minikube con recursos suficientes (asume que ya hiciste FASE 0):
 
      $ minikube start --cpus=4 --memory=8192 --driver=docker
      $ kubectl get nodes
      >>> El nodo debe estar en STATUS=Ready.
+
+     NOTA: si ves "You cannot change the memory size for an existing minikube
+     cluster", aborta y vuelve a la FASE 0 (minikube delete).
 
   2) Aplica todos los manifiestos con kustomize:
 
@@ -166,15 +216,31 @@ E. BOOTSTRAP DEL PRIMER MODELO
   1) Abre http://127.0.0.1:8080 (Airflow) e ingresa con admin/admin123.
   2) Activa (un-pause) el DAG "mlops_diabetes_pipeline".
   3) Disparalo manualmente con "Trigger DAG".
-  4) Espera a que las 6 tareas terminen en verde:
-       validate_source_file -> ingest_batch -> validate_batch
-         -> transform_and_clean -> split_dataset -> train_and_promote
+  4) Espera a que las 6 tareas terminen en verde. Tiempos tipicos en un
+     minikube con 4 CPU / 8 GB y dataset cacheado:
+       validate_source_file   ~30-90 s la primera vez (descarga Google Drive),
+                              <1 s las siguientes (cacheado en /opt/airflow/data).
+       ingest_batch           ~20-40 s (15.000 filas a Postgres).
+       validate_batch         <1 s.
+       transform_and_clean    ~15-30 s.
+       split_dataset          <1 s (solo reporta tamanios en XCom).
+       train_and_promote      ~1-3 min (entrena LR + RF, sube artefactos a MinIO,
+                              registra modelo y asigna alias champion).
+
   5) Verifica en MLflow (http://127.0.0.1:5000):
        - Experimento Proyecto2-Diabetes con runs (LogisticRegression y RandomForest).
        - Registered Model: DiabetesReadmissionModel con alias "champion".
-  6) Llama:
+
+  6) La API recarga el modelo al siguiente request (TTL 300s) o al reiniciarse.
+     Forzar recarga inmediata:
+     $ kubectl rollout restart deploy/api -n mlops-proyecto2
+
+  7) Confirma:
      $ curl http://127.0.0.1:8000/health
-     >>> {"status":"ok","model_loaded":true,...}
+     >>> {"status":"ok","model_loaded":true,"model_name":"DiabetesReadmissionModel",...}
+
+     $ curl http://127.0.0.1:8000/model-info
+     >>> {"model_name":"...","model_version":"1","model_alias":"champion",...}
 
 ================================================================================
   >>> A PARTIR DE AQUI YA NO SE DESPLIEGA NADA <<<
@@ -469,27 +535,68 @@ P. APAGAR / LIMPIAR
 Q. TROUBLESHOOTING RAPIDO
 --------------------------------------------------------------------------------
 
-  - "input/output error" en docker build:
-      DOCKER_BUILDKIT=0 docker build ...      o reiniciar Docker Desktop.
+  Q.1) "input/output error" o "no space left on device" en docker build:
+       - DOCKER_BUILDKIT=0 docker build ...
+       - Si no funciona, vuelve a la FASE 0 (system prune + subir disk size).
 
-  - "connection to server at 'postgres' refused" en Airflow:
-      Las imagenes ya esperan a Postgres con un loop tcp; si persiste:
-      $ kubectl rollout restart deploy/airflow-webserver deploy/airflow-scheduler -n mlops-proyecto2
+  Q.2) minikube arranca pero "You cannot change the memory size for an existing minikube cluster":
+       Estas reusando un cluster previo con menos recursos.
+       $ minikube delete && minikube start --cpus=4 --memory=8192 --driver=docker
 
-  - "RuntimeError: No registered versions found for model 'DiabetesReadmissionModel'":
-      Aun no se ha entrenado. Disparar el DAG en Airflow.
+  Q.3) "Docker is nearly out of disk space (88%+)":
+       Repite FASE 0.2 (docker system prune -a --volumes -f) y, si sigue,
+       sube el "Disk image size" en Docker Desktop -> Resources.
 
-  - La API sigue mostrando codigo viejo:
-      Subir un tag nuevo (api:v3), actualizar k8s/05-api.yaml y:
-      $ kubectl rollout restart deploy/api -n mlops-proyecto2
+  Q.4) Airflow pod en CrashLoopBackOff con "connection to server at 'postgres' refused":
+       Los manifiestos ya esperan a Postgres con un loop tcp; si persiste:
+       $ kubectl rollout restart deploy/airflow-webserver deploy/airflow-scheduler -n mlops-proyecto2
 
-  - El Job airflow-init falla con "field is immutable":
-      $ kubectl delete job airflow-init -n mlops-proyecto2
-      $ kubectl apply -f k8s/07-airflow.yaml
+  Q.5) Task validate_source_file falla en <1 s con "Permission denied: '/opt/project'":
+       La imagen vieja no creo /opt/airflow/data con permisos de airflow.
+       Asegurate de haber reconstruido la imagen de airflow despues de la
+       FASE 0 (el Dockerfile actual hace mkdir+chown).
+       Tambien verifica:
+       $ kubectl get configmap proyecto2-config -n mlops-proyecto2 -o yaml | grep DATASET_PATH
+       >>> DATASET_PATH: /opt/airflow/data/Diabetes.csv   (NO /opt/project/...)
 
-  - PVC en Pending:
-      $ kubectl describe pvc -n mlops-proyecto2
-      Verificar que minikube tiene el storage class default activo.
+  Q.6) Task train_and_promote falla con 404 en /api/2.0/mlflow/logged-models:
+       Cliente MLflow desalineado del servidor. El cliente debe ser 2.17.x.
+       Verifica:
+       $ kubectl exec deploy/airflow-scheduler -n mlops-proyecto2 -- python -c "import mlflow; print(mlflow.__version__)"
+       >>> Debe imprimir 2.17.2
+       Si imprime 3.x significa que se uso una imagen vieja. Rebuild de la
+       imagen de airflow (FASE B) con el requirements.txt actual y rollout
+       restart.
+
+  Q.7) "Could not read served logs: ... Name or service not known" en la UI
+       de Airflow:
+       Esto pasa cuando ves el log de una corrida cuyo pod scheduler ya no
+       existe. Dispara una nueva corrida del DAG y mira el log del nuevo run.
+       O lee el log directo del pod:
+       $ POD=$(kubectl get pods -n mlops-proyecto2 -l app=airflow-scheduler -o jsonpath='{.items[0].metadata.name}')
+       $ kubectl exec $POD -n mlops-proyecto2 -- find /opt/airflow/logs -name "*.log" | tail
+       $ kubectl exec $POD -n mlops-proyecto2 -- tail -n 80 <ruta-del-log>
+
+  Q.8) La API sigue mostrando codigo viejo despues de rebuild:
+       imagePullPolicy: Always ya esta seteado, pero si el tag es :latest
+       Kubernetes a veces cachea. Cambia a un tag nuevo (api:v2, api:v3, ...)
+       en k8s/05-api.yaml y aplica:
+       $ kubectl apply -f k8s/05-api.yaml
+       $ kubectl rollout restart deploy/api -n mlops-proyecto2
+
+  Q.9) El Job airflow-init falla con "field is immutable":
+       $ kubectl delete job airflow-init -n mlops-proyecto2
+       $ kubectl apply -f k8s/07-airflow.yaml
+
+  Q.10) PVC en Pending:
+        $ kubectl describe pvc -n mlops-proyecto2
+        Verificar que minikube tiene el storage class default activo.
+
+  Q.11) Port-forward se cae cada vez que un pod se reinicia:
+        El port-forward esta ligado a un pod especifico. Si reinicias deploys,
+        debes relanzar los port-forwards (seccion D).
+        Atajo para tumbarlos todos:
+        $ pkill -f "kubectl port-forward"
 
 ================================================================================
   FIN
