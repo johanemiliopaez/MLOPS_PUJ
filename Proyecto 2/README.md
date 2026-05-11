@@ -525,6 +525,17 @@ Hasta que el DAG no haya corrido al menos una vez, la API responde `status=degra
 <img width="1475" height="449" alt="image" src="https://github.com/user-attachments/assets/c750dfbc-05c9-4c59-917a-edab509793de" />
 </center>
 
+<center>
+<img width="1697" height="624" alt="image" src="https://github.com/user-attachments/assets/dcbe0b88-39cb-46a9-a6be-0445693ed4de" />
+</center>
+
+<center>
+<img width="1075" height="99" alt="image" src="https://github.com/user-attachments/assets/8eb1ea70-94d7-4143-97c1-20aff1c80c25" />
+<img width="1079" height="102" alt="image" src="https://github.com/user-attachments/assets/57fb4605-0ab9-4580-9b42-54d89f72d242" />
+<img width="1327" height="938" alt="image" src="https://github.com/user-attachments/assets/4189d9ca-4082-4d35-93c8-74fb3c0e37a8" />
+</center>
+
+
 
 ---
 
@@ -631,6 +642,10 @@ Mapeo punto a punto contra `MLOPS_Proyecto2_2026.pdf`:
 | Errores de validación | `try/except json.JSONDecodeError` y `requests.HTTPError` |
 | No habla directo con MLflow ni con la BD | Sólo HTTP a `API_URL` |
 
+<center>
+<img width="1245" height="916" alt="image" src="https://github.com/user-attachments/assets/261be83e-0a3a-4681-b2a7-c37e35a17607" />
+</center>
+
 ### Locust (sección 6.8)
 
 | Requisito | Cumplimiento |
@@ -651,55 +666,11 @@ Mapeo punto a punto contra `MLOPS_Proyecto2_2026.pdf`:
 | Tasa de error | Panel 4 |
 | Uso de CPU y memoria del pod | Paneles 8 y 9 (vía `process_*` de `prometheus_client`) |
 
----
+<center>
+<img width="1701" height="959" alt="image" src="https://github.com/user-attachments/assets/3612d9bd-d480-4897-a9db-d45ddd5a3c8b" />
+</center>
 
-## Troubleshooting
-
-Casos reales encontrados durante el despliegue y cómo se resolvieron.
-
-- **`input/output error` al hacer `docker build`**
-  Daño en cache/almacenamiento de Docker Desktop. Soluciones (en orden):
-  1. `DOCKER_BUILDKIT=0 docker build ...`
-  2. Reiniciar Docker Desktop.
-  3. Liberar espacio (`docker system prune -a`).
-
-- **Pods atrapados en `ContainerCreating` por PVC**
-  El provisioner `k8s.io/minikube-hostpath` necesita unos segundos. Si demora, validar:
-  `kubectl describe pvc minio-data -n mlops-proyecto2`.
-
-- **`api` en `CrashLoopBackOff` con `connection to server at "postgres" ... failed`**
-  Postgres aún no está listo cuando arranca la API. La API ya tolera ese caso y arranca en modo `degraded`; la sintomatología desaparece sola tras unos segundos. Si persiste:
-  - `kubectl rollout restart deployment/api -n mlops-proyecto2`.
-
-- **`api` con `RuntimeError: No registered versions found for model 'DiabetesReadmissionModel'`**
-  Aún no se ha entrenado nada. Disparar el DAG en Airflow.
-
-- **`airflow-webserver` se reinicia con `Connection refused (postgres)`**
-  El comando del contenedor espera con `until bash -c '</dev/tcp/postgres/5432'; do sleep 5; done` antes de arrancar. Si el reinicio se mantiene, revisar:
-  `kubectl logs deploy/airflow-webserver -n mlops-proyecto2`.
-
-- **Cambios en el código de la API no se ven**
-  Las imágenes se publican como `:latest` y `imagePullPolicy: Always` no es suficiente si el nodo cachea por digest. La estrategia segura es **publicar una etiqueta nueva** (`:v3`) y actualizar `k8s/05-api.yaml`.
-
-- **`The Job ... is invalid: spec.template ... field is immutable`**
-  Los `Job` no permiten cambiar `spec.template`. Para regenerar `airflow-init`:
-  ```bash
-  kubectl delete job airflow-init -n mlops-proyecto2
-  kubectl apply -f k8s/07-airflow.yaml
-  ```
-
-- **Probes muy estrictas tumbando `postgres-0`**
-  Las probes ya están relajadas (`timeoutSeconds: 5`, `failureThreshold: 6`, `liveness initialDelaySeconds: 60`).
 
 ---
 
-## Pendientes naturales
 
-Cosas que quedan abiertas a criterio del equipo según el ambiente final:
-
-- Refinar la lista de features según análisis exploratorio sobre el dataset modificado.
-- Exportar el dashboard final de Grafana con corridas reales de Locust para anexarlo como JSON al informe (`Share → Export → Save to file`).
-- Ajustar `replicas`, `requests` y `limits` según el clúster donde se sustente.
-- Sustituir credenciales por defecto por valores seguros (especialmente `MINIO_ROOT_PASSWORD`, `POSTGRES_PASSWORD`, `AIRFLOW_ADMIN_PASSWORD`).
-- Considerar empaquetar el despliegue como Helm chart si se quiere parametrizar por ambiente.
-- Grabar el video de sustentación (≤ 10 min, requisito 14 de los entregables).
