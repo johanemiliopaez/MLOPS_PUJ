@@ -1,0 +1,62 @@
+[2026-05-06T01:36:46.487+0000] {local_task_job_runner.py:120} INFO - ::group::Pre task execution logs
+[2026-05-06T01:36:46.518+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: diabetes_mlops_pipeline.load_incremental_raw manual__2026-05-06T01:36:44.306102+00:00 [queued]>
+[2026-05-06T01:36:46.526+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: diabetes_mlops_pipeline.load_incremental_raw manual__2026-05-06T01:36:44.306102+00:00 [queued]>
+[2026-05-06T01:36:46.527+0000] {taskinstance.py:2306} INFO - Starting attempt 1 of 2
+[2026-05-06T01:36:46.543+0000] {taskinstance.py:2330} INFO - Executing <Task(PythonOperator): load_incremental_raw> on 2026-05-06 01:36:44.306102+00:00
+[2026-05-06T01:36:46.553+0000] {standard_task_runner.py:90} INFO - Running: ['airflow', 'tasks', 'run', 'diabetes_mlops_pipeline', 'load_incremental_raw', 'manual__2026-05-06T01:36:44.306102+00:00', '--job-id', '2', '--raw', '--subdir', 'DAGS_FOLDER/mlops_pipeline.py', '--cfg-path', '/tmp/tmpm12cqlbv']
+[2026-05-06T01:36:46.556+0000] {standard_task_runner.py:91} INFO - Job 2: Subtask load_incremental_raw
+[2026-05-06T01:36:46.558+0000] {logging_mixin.py:188} WARNING - /home/airflow/.local/lib/python3.12/site-packages/airflow/task/task_runner/standard_task_runner.py:61 DeprecationWarning: This process (pid=238) is multi-threaded, use of fork() may lead to deadlocks in the child.
+[2026-05-06T01:36:46.559+0000] {standard_task_runner.py:63} INFO - Started process 274 to run task
+[2026-05-06T01:36:46.603+0000] {task_command.py:426} INFO - Running <TaskInstance: diabetes_mlops_pipeline.load_incremental_raw manual__2026-05-06T01:36:44.306102+00:00 [running]> on host 6e8d5e34293b
+[2026-05-06T01:36:46.684+0000] {taskinstance.py:2648} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops_team' AIRFLOW_CTX_DAG_ID='diabetes_mlops_pipeline' AIRFLOW_CTX_TASK_ID='load_incremental_raw' AIRFLOW_CTX_EXECUTION_DATE='2026-05-06T01:36:44.306102+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2026-05-06T01:36:44.306102+00:00'
+[2026-05-06T01:36:46.685+0000] {taskinstance.py:430} INFO - ::endgroup::
+[2026-05-06T01:36:47.754+0000] {logging_mixin.py:188} WARNING - /opt/airflow/dags/mlops_pipeline.py:62 UserWarning: pandas only supports SQLAlchemy connectable (engine/connection) or database string URI or sqlite3 DBAPI2 connection. Other DBAPI2 objects are not tested. Please consider using SQLAlchemy.
+[2026-05-06T01:36:47.756+0000] {taskinstance.py:441} INFO - ::group::Post task execution logs
+[2026-05-06T01:36:47.756+0000] {taskinstance.py:2905} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 465, in _execute_task
+    result = _execute_callable(context=context, **execute_callable_kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 432, in _execute_callable
+    return execute_callable(context=context, **execute_callable_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/baseoperator.py", line 400, in wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/operators/python.py", line 235, in execute
+    return_value = self.execute_callable()
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/operators/python.py", line 252, in execute_callable
+    return self.python_callable(*self.op_args, **self.op_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/dags/mlops_pipeline.py", line 62, in _load_incremental_raw
+    df_insert.to_sql('raw_data', engine, if_exists='append', index=False)
+  File "/home/airflow/.local/lib/python3.12/site-packages/pandas/util/_decorators.py", line 333, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/pandas/core/generic.py", line 3081, in to_sql
+    return sql.to_sql(
+           ^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/pandas/io/sql.py", line 842, in to_sql
+    return pandas_sql.to_sql(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/pandas/io/sql.py", line 2851, in to_sql
+    table.create()
+  File "/home/airflow/.local/lib/python3.12/site-packages/pandas/io/sql.py", line 984, in create
+    if self.exists():
+       ^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/pandas/io/sql.py", line 970, in exists
+    return self.pd_sql.has_table(self.name, self.schema)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/pandas/io/sql.py", line 2866, in has_table
+    return len(self.execute(query, [name]).fetchall()) > 0
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/pandas/io/sql.py", line 2673, in execute
+    cur = self.con.cursor()
+          ^^^^^^^^^^^^^^^
+AttributeError: 'Engine' object has no attribute 'cursor'
+[2026-05-06T01:36:47.770+0000] {taskinstance.py:1206} INFO - Marking task as UP_FOR_RETRY. dag_id=diabetes_mlops_pipeline, task_id=load_incremental_raw, run_id=manual__2026-05-06T01:36:44.306102+00:00, execution_date=20260506T013644, start_date=20260506T013646, end_date=20260506T013647
+[2026-05-06T01:36:47.782+0000] {standard_task_runner.py:110} ERROR - Failed to execute job 2 for task load_incremental_raw ('Engine' object has no attribute 'cursor'; 274)
+[2026-05-06T01:36:47.807+0000] {local_task_job_runner.py:240} INFO - Task exited with return code 1
+[2026-05-06T01:36:47.833+0000] {taskinstance.py:3498} INFO - 0 downstream tasks scheduled from follow-on schedule check
+[2026-05-06T01:36:47.837+0000] {local_task_job_runner.py:222} INFO - ::endgroup::

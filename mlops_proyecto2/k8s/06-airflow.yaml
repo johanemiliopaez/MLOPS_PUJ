@@ -1,0 +1,84 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: airflow-pvc
+  namespace: mlops-diabetes
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 2Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: airflow
+  namespace: mlops-diabetes
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: airflow
+  template:
+    metadata:
+      labels:
+        app: airflow
+    spec:
+      containers:
+      - name: airflow
+        image: puenayan1/mlops-airflow:v2
+        # SECUENCIA DE ARRANQUE BLINDADA
+        command:
+          - "bash"
+          - "-c"
+          - |
+            echo "1. Ejecutando migraciones de base de datos..."
+            airflow db migrate
+            
+            echo "2. Asegurando existencia del usuario admin..."
+            airflow users create --role Admin --username admin --password admin --email admin@example.com --firstname Admin --lastname User || true
+            
+            echo "3. Forzando el reseteo de la contraseña a 'admin'..."
+            airflow users reset-password --username admin --password admin
+            
+            echo "4. Sincronizando el archivo standalone..."
+            echo "admin" > /opt/airflow/standalone_admin_password.txt
+            
+            echo "5. Iniciando el orquestador Airflow..."
+            exec airflow standalone
+        ports:
+        - containerPort: 8080
+        env:
+        - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+          value: "postgresql+psycopg2://mlops_user:mlops_password@postgres:5432/airflow_db"
+        - name: AIRFLOW__CORE__LOAD_EXAMPLES
+          value: "False"
+        - name: MLFLOW_TRACKING_URI
+          value: "http://mlflow:5000"
+        - name: MLFLOW_S3_ENDPOINT_URL
+          value: "http://minio:9000"
+        - name: AWS_ACCESS_KEY_ID
+          value: "minio_admin"
+        - name: AWS_SECRET_ACCESS_KEY
+          value: "minio_password"
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "500m"
+          limits:
+            memory: "5Gi"
+            cpu: "1000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: airflow
+  namespace: mlops-diabetes
+spec:
+  selector:
+    app: airflow
+  ports:
+    - protocol: TCP
+      port: 8080
+  type: LoadBalancer
