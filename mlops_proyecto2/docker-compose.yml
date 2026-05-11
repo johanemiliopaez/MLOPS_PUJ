@@ -1,0 +1,207 @@
+version: '3.8'
+
+# Definimos una configuración base reutilizable para Airflow
+x-airflow-common: &airflow-common
+  build:
+    context: .
+    dockerfile: Dockerfile
+  environment:
+    &airflow-common-env
+    # Conexión a la base de datos PostgreSQL configurada previamente
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://mlops_user:mlops_password@postgres:5432/airflow_db
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    # Variables de entorno para que el DAG sepa dónde está MLflow
+    MLFLOW_TRACKING_URI: http://mlflow:5000
+    # --- AÑADIR ESTAS TRES LÍNEAS ---
+    AWS_ACCESS_KEY_ID: minio_admin
+    AWS_SECRET_ACCESS_KEY: minio_password
+    MLFLOW_S3_ENDPOINT_URL: http://minio:9000
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./logs:/opt/airflow/logs
+    - ./data:/opt/airflow/data # <-- Aquí guardaremos el archivo diabetic_data.csv
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+services:
+  # --- INFRAESTRUCTURA BASE (Fase 1) ---
+  postgres:
+    image: postgres:15
+    container_name: mlops_postgres
+    environment:
+      POSTGRES_USER: mlops_user
+      POSTGRES_PASSWORD: mlops_password
+      POSTGRES_DB: mlops_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mlops_user -d mlops_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio
+    container_name: mlops_minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minio_admin
+      MINIO_ROOT_PASSWORD: minio_password
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+  # Inicializador automático para crear el bucket en MinIO
+  minio-init:
+    image: minio/mc
+    container_name: mlops_minio_init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      echo 'Esperando a que la API de MinIO esté lista...';
+      sleep 10;
+      mc alias set myminio http://minio:9000 minio_admin minio_password;
+      mc mb myminio/mlflow-artifacts --ignore-existing;
+      mc anonymous set public myminio/mlflow-artifacts;
+      echo 'Bucket mlflow-artifacts creado y configurado exitosamente.';
+      exit 0;
+      "
+  mlflow:
+    image: python:3.10-slim
+    container_name: mlops_mlflow
+    command: >
+      bash -c "pip install mlflow psycopg2-binary boto3 &&
+      mlflow server 
+      --backend-store-uri postgresql://mlops_user:mlops_password@postgres:5432/mlops_db 
+      --default-artifact-root s3://mlflow-artifacts 
+      --host 0.0.0.0 
+      --allowed-hosts mlflow,mlflow:5000,localhost,localhost:5000,127.0.0.1,127.0.0.1:5000"
+    environment:
+      - AWS_ACCESS_KEY_ID=minio_admin
+      - AWS_SECRET_ACCESS_KEY=minio_password
+      - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
+    ports:
+      - "5000:5000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  # --- ORQUESTACIÓN (Airflow) ---
+  
+  # Servicio de inicialización (solo corre una vez para crear las tablas de Airflow)
+  # Servicio de inicialización explícita
+  airflow-init:
+    <<: *airflow-common
+    container_name: mlops_airflow_init
+    command: version
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_UPGRADE: 'true'
+      _AIRFLOW_WWW_USER_CREATE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: admin
+      _AIRFLOW_WWW_USER_PASSWORD: admin
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Interfaz gráfica de Airflow
+  airflow-webserver:
+    <<: *airflow-common
+    container_name: mlops_airflow_webserver
+    command: webserver
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+
+  # El motor que ejecuta los DAGs
+  airflow-scheduler:
+    <<: *airflow-common
+    container_name: mlops_airflow_scheduler
+    command: scheduler
+    depends_on:
+      postgres:
+        condition: service_healthy
+      airflow-init:
+        condition: service_completed_successfully
+# --- ROL 2: INFERENCIA Y SERVING ---
+  fastapi:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: mlops_fastapi
+    ports:
+      - "8000:8000"
+    environment:
+      # Credenciales para descargar el modelo desde MinIO
+      - AWS_ACCESS_KEY_ID=minio_admin
+      - AWS_SECRET_ACCESS_KEY=minio_password
+      - MLFLOW_S3_ENDPOINT_URL=http://minio:9000
+      - MLFLOW_TRACKING_URI=http://mlflow:5000
+      - DB_URI=postgresql+psycopg2://mlops_user:mlops_password@postgres:5432/mlops_db
+    depends_on:
+      mlflow:
+        condition: service_started
+
+  streamlit:
+    build:
+      context: ./ui
+      dockerfile: Dockerfile
+    container_name: mlops_streamlit
+    ports:
+      - "8501:8501"
+    depends_on:
+      - fastapi
+  locust:
+    image: locustio/locust
+    container_name: mlops_locust
+    ports:
+      - "8089:8089"
+    volumes:
+      - ./load_test:/mnt/locust
+    # Apuntamos el cañón directamente al servicio interno de FastAPI
+    command: -f /mnt/locust/locustfile.py --host http://fastapi:8000
+    depends_on:
+      - fastapi
+
+  prometheus:
+    image: prom/prometheus
+    container_name: mlops_prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    depends_on:
+      - fastapi
+
+  grafana:
+    image: grafana/grafana
+    container_name: mlops_grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin # Contraseña inicial
+    depends_on:
+      - prometheus
+volumes:
+  postgres_data:
+  minio_data:

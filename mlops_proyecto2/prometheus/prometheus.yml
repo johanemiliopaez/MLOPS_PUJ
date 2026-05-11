@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 5s # Recolectar datos cada 5 segundos para ver cambios rápidos con Locust
+
+scrape_configs:
+  - job_name: 'fastapi-metrics'
+    static_configs:
+      - targets: ['fastapi:8000']

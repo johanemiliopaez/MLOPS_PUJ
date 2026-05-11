@@ -1,0 +1,142 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fastapi
+  namespace: mlops-diabetes
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fastapi
+  template:
+    metadata:
+      labels:
+        app: fastapi
+    spec:
+      containers:
+      - name: fastapi
+        image: puenayan1/mlops-api:v2
+        ports:
+        - containerPort: 8000
+        env:
+        - name: MLFLOW_TRACKING_URI
+          value: "http://mlflow:5000"
+        - name: MLFLOW_S3_ENDPOINT_URL
+          value: "http://minio:9000"
+        - name: AWS_ACCESS_KEY_ID
+          value: "minio_admin"
+        - name: AWS_SECRET_ACCESS_KEY
+          value: "minio_password"
+        - name: DB_URI
+          value: "postgresql+psycopg2://mlops_user:mlops_password@postgres:5432/mlops_db"
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fastapi
+  namespace: mlops-diabetes
+spec:
+  selector:
+    app: fastapi
+  ports:
+    - protocol: TCP
+      port: 8000
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: streamlit
+  namespace: mlops-diabetes
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: streamlit
+  template:
+    metadata:
+      labels:
+        app: streamlit
+    spec:
+      containers:
+      - name: streamlit
+        image: puenayan1/mlops-ui:v2
+        ports:
+        - containerPort: 8501
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "300m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: streamlit
+  namespace: mlops-diabetes
+spec:
+  selector:
+    app: streamlit
+  ports:
+    - protocol: TCP
+      port: 8501
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: locust
+  namespace: mlops-diabetes
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: locust
+  template:
+    metadata:
+      labels:
+        app: locust
+    spec:
+      containers:
+      - name: locust
+        image: locustio/locust
+        ports:
+        - containerPort: 8089
+        command: ["locust", "-f", "/mnt/locust/locustfile.py", "--host", "http://fastapi:8000"]
+        volumeMounts:
+        - name: locust-script
+          mountPath: /mnt/locust
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "250m"
+      volumes:
+      - name: locust-script
+        configMap:
+          name: locustfile-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: locust
+  namespace: mlops-diabetes
+spec:
+  selector:
+    app: locust
+  ports:
+    - protocol: TCP
+      port: 8089
+  type: LoadBalancer

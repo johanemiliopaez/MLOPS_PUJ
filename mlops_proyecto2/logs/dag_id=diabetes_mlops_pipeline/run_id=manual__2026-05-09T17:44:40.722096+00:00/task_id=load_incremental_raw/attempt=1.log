@@ -1,0 +1,49 @@
+[2026-05-09T17:44:42.462+0000] {local_task_job_runner.py:120} INFO - ::group::Pre task execution logs
+[2026-05-09T17:44:42.486+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: diabetes_mlops_pipeline.load_incremental_raw manual__2026-05-09T17:44:40.722096+00:00 [queued]>
+[2026-05-09T17:44:42.491+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: diabetes_mlops_pipeline.load_incremental_raw manual__2026-05-09T17:44:40.722096+00:00 [queued]>
+[2026-05-09T17:44:42.491+0000] {taskinstance.py:2306} INFO - Starting attempt 1 of 2
+[2026-05-09T17:44:42.502+0000] {taskinstance.py:2330} INFO - Executing <Task(PythonOperator): load_incremental_raw> on 2026-05-09 17:44:40.722096+00:00
+[2026-05-09T17:44:42.510+0000] {standard_task_runner.py:90} INFO - Running: ['airflow', 'tasks', 'run', 'diabetes_mlops_pipeline', 'load_incremental_raw', 'manual__2026-05-09T17:44:40.722096+00:00', '--job-id', '12', '--raw', '--subdir', 'DAGS_FOLDER/mlops_pipeline.py', '--cfg-path', '/tmp/tmp0uh_o1bb']
+[2026-05-09T17:44:42.511+0000] {standard_task_runner.py:91} INFO - Job 12: Subtask load_incremental_raw
+[2026-05-09T17:44:42.511+0000] {logging_mixin.py:188} WARNING - /home/airflow/.local/lib/python3.12/site-packages/airflow/task/task_runner/standard_task_runner.py:61 DeprecationWarning: This process (pid=1374) is multi-threaded, use of fork() may lead to deadlocks in the child.
+[2026-05-09T17:44:42.513+0000] {standard_task_runner.py:63} INFO - Started process 1392 to run task
+[2026-05-09T17:44:42.548+0000] {task_command.py:426} INFO - Running <TaskInstance: diabetes_mlops_pipeline.load_incremental_raw manual__2026-05-09T17:44:40.722096+00:00 [running]> on host 14856d496fb0
+[2026-05-09T17:44:42.616+0000] {taskinstance.py:2648} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops_team' AIRFLOW_CTX_DAG_ID='diabetes_mlops_pipeline' AIRFLOW_CTX_TASK_ID='load_incremental_raw' AIRFLOW_CTX_EXECUTION_DATE='2026-05-09T17:44:40.722096+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2026-05-09T17:44:40.722096+00:00'
+[2026-05-09T17:44:42.618+0000] {taskinstance.py:430} INFO - ::endgroup::
+[2026-05-09T17:44:43.490+0000] {taskinstance.py:441} INFO - ::group::Post task execution logs
+[2026-05-09T17:44:43.491+0000] {taskinstance.py:2905} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 465, in _execute_task
+    result = _execute_callable(context=context, **execute_callable_kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 432, in _execute_callable
+    return execute_callable(context=context, **execute_callable_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/baseoperator.py", line 400, in wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/operators/python.py", line 235, in execute
+    return_value = self.execute_callable()
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/operators/python.py", line 252, in execute_callable
+    return self.python_callable(*self.op_args, **self.op_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/dags/mlops_pipeline.py", line 56, in _load_incremental_raw
+    df_insert.to_sql('raw_data', con=DB_URI, if_exists='append', index=False)
+  File "/home/airflow/.local/lib/python3.12/site-packages/pandas/util/_decorators.py", line 333, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/pandas/core/generic.py", line 3081, in to_sql
+    return sql.to_sql(
+           ^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/pandas/io/sql.py", line 841, in to_sql
+    with pandasSQL_builder(con, schema=schema, need_transaction=True) as pandas_sql:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/pandas/io/sql.py", line 903, in pandasSQL_builder
+    raise ImportError("Using URI string without sqlalchemy installed.")
+ImportError: Using URI string without sqlalchemy installed.
+[2026-05-09T17:44:43.503+0000] {taskinstance.py:1206} INFO - Marking task as UP_FOR_RETRY. dag_id=diabetes_mlops_pipeline, task_id=load_incremental_raw, run_id=manual__2026-05-09T17:44:40.722096+00:00, execution_date=20260509T174440, start_date=20260509T174442, end_date=20260509T174443
+[2026-05-09T17:44:43.516+0000] {standard_task_runner.py:110} ERROR - Failed to execute job 12 for task load_incremental_raw (Using URI string without sqlalchemy installed.; 1392)
+[2026-05-09T17:44:43.556+0000] {local_task_job_runner.py:240} INFO - Task exited with return code 1
+[2026-05-09T17:44:43.580+0000] {taskinstance.py:3498} INFO - 0 downstream tasks scheduled from follow-on schedule check
+[2026-05-09T17:44:43.584+0000] {local_task_job_runner.py:222} INFO - ::endgroup::

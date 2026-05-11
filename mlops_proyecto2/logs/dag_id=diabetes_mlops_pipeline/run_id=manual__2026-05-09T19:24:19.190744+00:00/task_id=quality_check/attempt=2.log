@@ -1,0 +1,19 @@
+[2026-05-09T19:27:34.634+0000] {local_task_job_runner.py:120} INFO - ::group::Pre task execution logs
+[2026-05-09T19:27:34.657+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: diabetes_mlops_pipeline.quality_check manual__2026-05-09T19:24:19.190744+00:00 [queued]>
+[2026-05-09T19:27:34.663+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: diabetes_mlops_pipeline.quality_check manual__2026-05-09T19:24:19.190744+00:00 [queued]>
+[2026-05-09T19:27:34.663+0000] {taskinstance.py:2306} INFO - Starting attempt 2 of 3
+[2026-05-09T19:27:34.673+0000] {taskinstance.py:2330} INFO - Executing <Task(PythonOperator): quality_check> on 2026-05-09 19:24:19.190744+00:00
+[2026-05-09T19:27:34.684+0000] {logging_mixin.py:188} WARNING - /home/airflow/.local/lib/python3.12/site-packages/airflow/task/task_runner/standard_task_runner.py:61 DeprecationWarning: This process (pid=1035) is multi-threaded, use of fork() may lead to deadlocks in the child.
+[2026-05-09T19:27:34.682+0000] {standard_task_runner.py:90} INFO - Running: ['airflow', 'tasks', 'run', 'diabetes_mlops_pipeline', 'quality_check', 'manual__2026-05-09T19:24:19.190744+00:00', '--job-id', '15', '--raw', '--subdir', 'DAGS_FOLDER/mlops_pipeline.py', '--cfg-path', '/tmp/tmpzrpwcb18']
+[2026-05-09T19:27:34.684+0000] {standard_task_runner.py:91} INFO - Job 15: Subtask quality_check
+[2026-05-09T19:27:34.684+0000] {standard_task_runner.py:63} INFO - Started process 1053 to run task
+[2026-05-09T19:27:34.720+0000] {task_command.py:426} INFO - Running <TaskInstance: diabetes_mlops_pipeline.quality_check manual__2026-05-09T19:24:19.190744+00:00 [running]> on host 3441b056496b
+[2026-05-09T19:27:34.790+0000] {taskinstance.py:2648} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops_team' AIRFLOW_CTX_DAG_ID='diabetes_mlops_pipeline' AIRFLOW_CTX_TASK_ID='quality_check' AIRFLOW_CTX_EXECUTION_DATE='2026-05-09T19:24:19.190744+00:00' AIRFLOW_CTX_TRY_NUMBER='2' AIRFLOW_CTX_DAG_RUN_ID='manual__2026-05-09T19:24:19.190744+00:00'
+[2026-05-09T19:27:34.791+0000] {taskinstance.py:430} INFO - ::endgroup::
+[2026-05-09T19:27:34.832+0000] {logging_mixin.py:188} INFO - Quality check superado. Lote batch_20260509192730 tiene 15000 registros.
+[2026-05-09T19:27:34.832+0000] {python.py:237} INFO - Done. Returned value was: None
+[2026-05-09T19:27:34.833+0000] {taskinstance.py:441} INFO - ::group::Post task execution logs
+[2026-05-09T19:27:34.840+0000] {taskinstance.py:1206} INFO - Marking task as SUCCESS. dag_id=diabetes_mlops_pipeline, task_id=quality_check, run_id=manual__2026-05-09T19:24:19.190744+00:00, execution_date=20260509T192419, start_date=20260509T192734, end_date=20260509T192734
+[2026-05-09T19:27:34.865+0000] {local_task_job_runner.py:240} INFO - Task exited with return code 0
+[2026-05-09T19:27:34.888+0000] {taskinstance.py:3498} INFO - 1 downstream tasks scheduled from follow-on schedule check
+[2026-05-09T19:27:34.891+0000] {local_task_job_runner.py:222} INFO - ::endgroup::

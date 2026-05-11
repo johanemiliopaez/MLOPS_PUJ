@@ -1,0 +1,46 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: mlops-diabetes
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mlops-secrets
+  namespace: mlops-diabetes
+type: Opaque
+stringData:
+  POSTGRES_USER: "mlops_user"
+  POSTGRES_PASSWORD: "mlops_password"
+  MINIO_ROOT_USER: "minio_admin"
+  MINIO_ROOT_PASSWORD: "minio_password"
+  GF_SECURITY_ADMIN_PASSWORD: "admin"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: locustfile-config
+  namespace: mlops-diabetes
+data:
+  locustfile.py: |
+    from locust import HttpUser, task, between
+    import random
+    class DiabetesPredictorUser(HttpUser):
+        wait_time = between(1, 2)
+        @task(5)
+        def predict_readmission(self):
+            payload = {
+                "age": random.choice(["[40-50)", "[50-60)", "[60-70)", "[70-80)", "[80-90)"]),
+                "time_in_hospital": random.randint(1, 14),
+                "num_lab_procedures": random.randint(1, 100),
+                "num_procedures": random.randint(0, 6),
+                "num_medications": random.randint(1, 50),
+                "number_outpatient": random.randint(0, 5),
+                "number_emergency": random.randint(0, 5),
+                "number_inpatient": random.randint(0, 5),
+                "number_diagnoses": random.randint(1, 16),
+                "change": random.choice(["No", "Ch"]),
+                "diabetesMed": random.choice(["No", "Yes"])
+            }
+            self.client.post("/predict", json=payload)

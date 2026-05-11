@@ -1,0 +1,116 @@
+[2026-05-09T18:01:05.642+0000] {local_task_job_runner.py:120} INFO - ::group::Pre task execution logs
+[2026-05-09T18:01:05.665+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: diabetes_mlops_pipeline.process_and_clean manual__2026-05-09T17:50:51.766816+00:00 [queued]>
+[2026-05-09T18:01:05.670+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: diabetes_mlops_pipeline.process_and_clean manual__2026-05-09T17:50:51.766816+00:00 [queued]>
+[2026-05-09T18:01:05.670+0000] {taskinstance.py:2306} INFO - Starting attempt 2 of 2
+[2026-05-09T18:01:05.681+0000] {taskinstance.py:2330} INFO - Executing <Task(PythonOperator): process_and_clean> on 2026-05-09 17:50:51.766816+00:00
+[2026-05-09T18:01:05.690+0000] {logging_mixin.py:188} WARNING - /home/airflow/.local/lib/python3.12/site-packages/airflow/task/task_runner/standard_task_runner.py:61 DeprecationWarning: This process (pid=1213) is multi-threaded, use of fork() may lead to deadlocks in the child.
+[2026-05-09T18:01:05.689+0000] {standard_task_runner.py:90} INFO - Running: ['airflow', 'tasks', 'run', 'diabetes_mlops_pipeline', 'process_and_clean', 'manual__2026-05-09T17:50:51.766816+00:00', '--job-id', '41', '--raw', '--subdir', 'DAGS_FOLDER/mlops_pipeline.py', '--cfg-path', '/tmp/tmp7je5u3z3']
+[2026-05-09T18:01:05.691+0000] {standard_task_runner.py:91} INFO - Job 41: Subtask process_and_clean
+[2026-05-09T18:01:05.691+0000] {standard_task_runner.py:63} INFO - Started process 1231 to run task
+[2026-05-09T18:01:05.734+0000] {task_command.py:426} INFO - Running <TaskInstance: diabetes_mlops_pipeline.process_and_clean manual__2026-05-09T17:50:51.766816+00:00 [running]> on host d709ff05c5f9
+[2026-05-09T18:01:05.806+0000] {taskinstance.py:2648} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops_team' AIRFLOW_CTX_DAG_ID='diabetes_mlops_pipeline' AIRFLOW_CTX_TASK_ID='process_and_clean' AIRFLOW_CTX_EXECUTION_DATE='2026-05-09T17:50:51.766816+00:00' AIRFLOW_CTX_TRY_NUMBER='2' AIRFLOW_CTX_DAG_RUN_ID='manual__2026-05-09T17:50:51.766816+00:00'
+[2026-05-09T18:01:05.807+0000] {taskinstance.py:430} INFO - ::endgroup::
+[2026-05-09T18:01:08.902+0000] {taskinstance.py:441} INFO - ::group::Post task execution logs
+[2026-05-09T18:01:08.903+0000] {taskinstance.py:2905} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1890, in _execute_context
+    self.dialect.do_executemany(
+  File "/home/airflow/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/psycopg2.py", line 982, in do_executemany
+    context._psycopg2_fetched_rows = xtras.execute_values(
+                                     ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/psycopg2/extras.py", line 1299, in execute_values
+    cur.execute(b''.join(parts))
+psycopg2.errors.InvalidTextRepresentation: invalid input syntax for type json
+LINE 1: ...1, "glimepiride-pioglitazone": "No"}', 1),(45053, '{"age": "...
+                                                             ^
+DETAIL:  Token "NaN" is invalid.
+CONTEXT:  JSON data, line 1: ..., "diag_1": "486", "diag_2": "250", "diag_3": NaN...
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 465, in _execute_task
+    result = _execute_callable(context=context, **execute_callable_kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 432, in _execute_callable
+    return execute_callable(context=context, **execute_callable_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/baseoperator.py", line 400, in wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/operators/python.py", line 235, in execute
+    return_value = self.execute_callable()
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/operators/python.py", line 252, in execute_callable
+    return self.python_callable(*self.op_args, **self.op_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/dags/mlops_pipeline.py", line 114, in _process_and_clean
+    df_clean_insert.to_sql('clean_data', con=engine, if_exists='append', index=False)
+  File "/home/airflow/.local/lib/python3.12/site-packages/pandas/util/_decorators.py", line 333, in wrapper
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/pandas/core/generic.py", line 3008, in to_sql
+    return sql.to_sql(
+           ^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/pandas/io/sql.py", line 788, in to_sql
+    return pandas_sql.to_sql(
+           ^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/pandas/io/sql.py", line 1958, in to_sql
+    total_inserted = sql_engine.insert_records(
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/pandas/io/sql.py", line 1507, in insert_records
+    raise err
+  File "/home/airflow/.local/lib/python3.12/site-packages/pandas/io/sql.py", line 1498, in insert_records
+    return table.insert(chunksize=chunksize, method=method)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/pandas/io/sql.py", line 1059, in insert
+    num_inserted = exec_insert(conn, keys, chunk_iter)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/pandas/io/sql.py", line 951, in _execute_insert
+    result = conn.execute(self.table.insert(), data)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1385, in execute
+    return meth(self, multiparams, params, _EMPTY_EXECUTION_OPTS)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/sqlalchemy/sql/elements.py", line 334, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1577, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1953, in _execute_context
+    self._handle_dbapi_exception(
+  File "/home/airflow/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 2134, in _handle_dbapi_exception
+    util.raise_(
+  File "/home/airflow/.local/lib/python3.12/site-packages/sqlalchemy/util/compat.py", line 211, in raise_
+    raise exception
+  File "/home/airflow/.local/lib/python3.12/site-packages/sqlalchemy/engine/base.py", line 1890, in _execute_context
+    self.dialect.do_executemany(
+  File "/home/airflow/.local/lib/python3.12/site-packages/sqlalchemy/dialects/postgresql/psycopg2.py", line 982, in do_executemany
+    context._psycopg2_fetched_rows = xtras.execute_values(
+                                     ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/psycopg2/extras.py", line 1299, in execute_values
+    cur.execute(b''.join(parts))
+sqlalchemy.exc.DataError: (psycopg2.errors.InvalidTextRepresentation) invalid input syntax for type json
+LINE 1: ...1, "glimepiride-pioglitazone": "No"}', 1),(45053, '{"age": "...
+                                                             ^
+DETAIL:  Token "NaN" is invalid.
+CONTEXT:  JSON data, line 1: ..., "diag_1": "486", "diag_2": "250", "diag_3": NaN...
+
+[SQL: INSERT INTO clean_data (raw_id, features, readmitted_binary) VALUES (%(raw_id)s, %(features)s, %(readmitted_binary)s)]
+[parameters: ({'raw_id': 45001, 'features': '{"age": "[50-60)", "race": "AfricanAmerican", "change": "No", "diag_1": "724", "diag_2": "250", "diag_3": "401", "gender": "Female", "examide": "No", ... (645 characters truncated) ... e-metformin": "No", "metformin-pioglitazone": "No", "metformin-rosiglitazone": "No", "discharge_disposition_id": 1, "glimepiride-pioglitazone": "No"}', 'readmitted_binary': 1}, {'raw_id': 45002, 'features': '{"age": "[50-60)", "race": "Caucasian", "change": "No", "diag_1": "785", "diag_2": "789", "diag_3": "211", "gender": "Female", "examide": "No", "insu ... (639 characters truncated) ... e-metformin": "No", "metformin-pioglitazone": "No", "metformin-rosiglitazone": "No", "discharge_disposition_id": 1, "glimepiride-pioglitazone": "No"}', 'readmitted_binary': 0}, {'raw_id': 45003, 'features': '{"age": "[60-70)", "race": "Caucasian", "change": "No", "diag_1": "414", "diag_2": "413", "diag_3": "403", "gender": "Male", "examide": "No", "insuli ... (637 characters truncated) ... e-metformin": "No", "metformin-pioglitazone": "No", "metformin-rosiglitazone": "No", "discharge_disposition_id": 1, "glimepiride-pioglitazone": "No"}', 'readmitted_binary': 1}, {'raw_id': 45004, 'features': '{"age": "[50-60)", "race": "Caucasian", "change": "Ch", "diag_1": "786", "diag_2": "250.92", "diag_3": "402", "gender": "Female", "examide": "No", "i ... (649 characters truncated) ... e-metformin": "No", "metformin-pioglitazone": "No", "metformin-rosiglitazone": "No", "discharge_disposition_id": 1, "glimepiride-pioglitazone": "No"}', 'readmitted_binary': 0}, {'raw_id': 45005, 'features': '{"age": "[60-70)", "race": "Caucasian", "change": "Ch", "diag_1": "250.02", "diag_2": "295", "diag_3": "V15", "gender": "Female", "examide": "No", "i ... (646 characters truncated) ... e-metformin": "No", "metformin-pioglitazone": "No", "metformin-rosiglitazone": "No", "discharge_disposition_id": 5, "glimepiride-pioglitazone": "No"}', 'readmitted_binary': 0}, {'raw_id': 45006, 'features': '{"age": "[70-80)", "race": "Caucasian", "change": "No", "diag_1": "571", "diag_2": "303", "diag_3": "789", "gender": "Male", "examide": "No", "insuli ... (636 characters truncated) ... e-metformin": "No", "metformin-pioglitazone": "No", "metformin-rosiglitazone": "No", "discharge_disposition_id": 1, "glimepiride-pioglitazone": "No"}', 'readmitted_binary': 1}, {'raw_id': 45007, 'features': '{"age": "[40-50)", "race": "Caucasian", "change": "Ch", "diag_1": "250.8", "diag_2": "730", "diag_3": "682", "gender": "Male", "examide": "No", "insu ... (640 characters truncated) ... e-metformin": "No", "metformin-pioglitazone": "No", "metformin-rosiglitazone": "No", "discharge_disposition_id": 1, "glimepiride-pioglitazone": "No"}', 'readmitted_binary': 0}, {'raw_id': 45008, 'features': '{"age": "[70-80)", "race": "Caucasian", "change": "Ch", "diag_1": "162", "diag_2": "788", "diag_3": "276", "gender": "Male", "examide": "No", "insuli ... (645 characters truncated) ... e-metformin": "No", "metformin-pioglitazone": "No", "metformin-rosiglitazone": "No", "discharge_disposition_id": 3, "glimepiride-pioglitazone": "No"}', 'readmitted_binary': 0}  ... displaying 10 of 15000 total bound parameter sets ...  {'raw_id': 59999, 'features': '{"age": "[60-70)", "race": "Caucasian", "change": "Ch", "diag_1": "291", "diag_2": "424", "diag_3": "311", "gender": "Female", "examide": "No", "insu ... (644 characters truncated) ... e-metformin": "No", "metformin-pioglitazone": "No", "metformin-rosiglitazone": "No", "discharge_disposition_id": 1, "glimepiride-pioglitazone": "No"}', 'readmitted_binary': 0}, {'raw_id': 60000, 'features': '{"age": "[60-70)", "race": "Caucasian", "change": "Ch", "diag_1": "38", "diag_2": "995", "diag_3": "250.42", "gender": "Female", "examide": "No", "in ... (650 characters truncated) ... e-metformin": "No", "metformin-pioglitazone": "No", "metformin-rosiglitazone": "No", "discharge_disposition_id": 6, "glimepiride-pioglitazone": "No"}', 'readmitted_binary': 0})]
+(Background on this error at: https://sqlalche.me/e/14/9h9h)
+[2026-05-09T18:01:08.914+0000] {taskinstance.py:1206} INFO - Marking task as FAILED. dag_id=diabetes_mlops_pipeline, task_id=process_and_clean, run_id=manual__2026-05-09T17:50:51.766816+00:00, execution_date=20260509T175051, start_date=20260509T180105, end_date=20260509T180108
+[2026-05-09T18:01:08.929+0000] {standard_task_runner.py:110} ERROR - Failed to execute job 41 for task process_and_clean ((psycopg2.errors.InvalidTextRepresentation) invalid input syntax for type json
+LINE 1: ...1, "glimepiride-pioglitazone": "No"}', 1),(45053, '{"age": "...
+                                                             ^
+DETAIL:  Token "NaN" is invalid.
+CONTEXT:  JSON data, line 1: ..., "diag_1": "486", "diag_2": "250", "diag_3": NaN...
+
+[SQL: INSERT INTO clean_data (raw_id, features, readmitted_binary) VALUES (%(raw_id)s, %(features)s, %(readmitted_binary)s)]
+[parameters: ({'raw_id': 45001, 'features': '{"age": "[50-60)", "race": "AfricanAmerican", "change": "No", "diag_1": "724", "diag_2": "250", "diag_3": "401", "gender": "Female", "examide": "No", ... (645 characters truncated) ... e-metformin": "No", "metformin-pioglitazone": "No", "metformin-rosiglitazone": "No", "discharge_disposition_id": 1, "glimepiride-pioglitazone": "No"}', 'readmitted_binary': 1}, {'raw_id': 45002, 'features': '{"age": "[50-60)", "race": "Caucasian", "change": "No", "diag_1": "785", "diag_2": "789", "diag_3": "211", "gender": "Female", "examide": "No", "insu ... (639 characters truncated) ... e-metformin": "No", "metformin-pioglitazone": "No", "metformin-rosiglitazone": "No", "discharge_disposition_id": 1, "glimepiride-pioglitazone": "No"}', 'readmitted_binary': 0}, {'raw_id': 45003, 'features': '{"age": "[60-70)", "race": "Caucasian", "change": "No", "diag_1": "414", "diag_2": "413", "diag_3": "403", "gender": "Male", "examide": "No", "insuli ... (637 characters truncated) ... e-metformin": "No", "metformin-pioglitazone": "No", "metformin-rosiglitazone": "No", "discharge_disposition_id": 1, "glimepiride-pioglitazone": "No"}', 'readmitted_binary': 1}, {'raw_id': 45004, 'features': '{"age": "[50-60)", "race": "Caucasian", "change": "Ch", "diag_1": "786", "diag_2": "250.92", "diag_3": "402", "gender": "Female", "examide": "No", "i ... (649 characters truncated) ... e-metformin": "No", "metformin-pioglitazone": "No", "metformin-rosiglitazone": "No", "discharge_disposition_id": 1, "glimepiride-pioglitazone": "No"}', 'readmitted_binary': 0}, {'raw_id': 45005, 'features': '{"age": "[60-70)", "race": "Caucasian", "change": "Ch", "diag_1": "250.02", "diag_2": "295", "diag_3": "V15", "gender": "Female", "examide": "No", "i ... (646 characters truncated) ... e-metformin": "No", "metformin-pioglitazone": "No", "metformin-rosiglitazone": "No", "discharge_disposition_id": 5, "glimepiride-pioglitazone": "No"}', 'readmitted_binary': 0}, {'raw_id': 45006, 'features': '{"age": "[70-80)", "race": "Caucasian", "change": "No", "diag_1": "571", "diag_2": "303", "diag_3": "789", "gender": "Male", "examide": "No", "insuli ... (636 characters truncated) ... e-metformin": "No", "metformin-pioglitazone": "No", "metformin-rosiglitazone": "No", "discharge_disposition_id": 1, "glimepiride-pioglitazone": "No"}', 'readmitted_binary': 1}, {'raw_id': 45007, 'features': '{"age": "[40-50)", "race": "Caucasian", "change": "Ch", "diag_1": "250.8", "diag_2": "730", "diag_3": "682", "gender": "Male", "examide": "No", "insu ... (640 characters truncated) ... e-metformin": "No", "metformin-pioglitazone": "No", "metformin-rosiglitazone": "No", "discharge_disposition_id": 1, "glimepiride-pioglitazone": "No"}', 'readmitted_binary': 0}, {'raw_id': 45008, 'features': '{"age": "[70-80)", "race": "Caucasian", "change": "Ch", "diag_1": "162", "diag_2": "788", "diag_3": "276", "gender": "Male", "examide": "No", "insuli ... (645 characters truncated) ... e-metformin": "No", "metformin-pioglitazone": "No", "metformin-rosiglitazone": "No", "discharge_disposition_id": 3, "glimepiride-pioglitazone": "No"}', 'readmitted_binary': 0}  ... displaying 10 of 15000 total bound parameter sets ...  {'raw_id': 59999, 'features': '{"age": "[60-70)", "race": "Caucasian", "change": "Ch", "diag_1": "291", "diag_2": "424", "diag_3": "311", "gender": "Female", "examide": "No", "insu ... (644 characters truncated) ... e-metformin": "No", "metformin-pioglitazone": "No", "metformin-rosiglitazone": "No", "discharge_disposition_id": 1, "glimepiride-pioglitazone": "No"}', 'readmitted_binary': 0}, {'raw_id': 60000, 'features': '{"age": "[60-70)", "race": "Caucasian", "change": "Ch", "diag_1": "38", "diag_2": "995", "diag_3": "250.42", "gender": "Female", "examide": "No", "in ... (650 characters truncated) ... e-metformin": "No", "metformin-pioglitazone": "No", "metformin-rosiglitazone": "No", "discharge_disposition_id": 6, "glimepiride-pioglitazone": "No"}', 'readmitted_binary': 0})]
+(Background on this error at: https://sqlalche.me/e/14/9h9h); 1231)
+[2026-05-09T18:01:08.947+0000] {local_task_job_runner.py:240} INFO - Task exited with return code 1
+[2026-05-09T18:01:08.964+0000] {taskinstance.py:3498} INFO - 0 downstream tasks scheduled from follow-on schedule check
+[2026-05-09T18:01:08.970+0000] {local_task_job_runner.py:222} INFO - ::endgroup::

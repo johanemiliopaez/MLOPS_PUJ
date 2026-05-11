@@ -1,0 +1,133 @@
+[2026-05-06T01:35:15.769+0000] {processor.py:161} INFO - Started process (PID=172) to work on /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:35:15.771+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/mlops_pipeline.py for tasks to queue
+[2026-05-06T01:35:15.775+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:35:15.775+0000] {dagbag.py:545} INFO - Filling up the DagBag from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:35:17.749+0000] {processor.py:840} INFO - DAG(s) 'diabetes_mlops_pipeline' retrieved from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:35:18.082+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:35:18.081+0000] {override.py:1829} INFO - Created Permission View: can delete on DAG:diabetes_mlops_pipeline
+[2026-05-06T01:35:18.091+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:35:18.091+0000] {override.py:1829} INFO - Created Permission View: can edit on DAG:diabetes_mlops_pipeline
+[2026-05-06T01:35:18.099+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:35:18.099+0000] {override.py:1829} INFO - Created Permission View: can read on DAG:diabetes_mlops_pipeline
+[2026-05-06T01:35:18.101+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:35:18.100+0000] {dag.py:3096} INFO - Sync 1 DAGs
+[2026-05-06T01:35:18.111+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:35:18.111+0000] {dag.py:3118} INFO - Creating ORM DAG for diabetes_mlops_pipeline
+[2026-05-06T01:35:18.123+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:35:18.123+0000] {dag.py:3954} INFO - Setting next_dagrun for diabetes_mlops_pipeline to 2026-05-05 00:00:00+00:00, run_after=2026-05-06 00:00:00+00:00
+[2026-05-06T01:35:18.144+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/mlops_pipeline.py took 2.380 seconds
+[2026-05-06T01:35:48.302+0000] {processor.py:161} INFO - Started process (PID=194) to work on /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:35:48.303+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/mlops_pipeline.py for tasks to queue
+[2026-05-06T01:35:48.305+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:35:48.305+0000] {dagbag.py:545} INFO - Filling up the DagBag from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:35:49.774+0000] {processor.py:840} INFO - DAG(s) 'diabetes_mlops_pipeline' retrieved from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:35:49.793+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:35:49.793+0000] {dag.py:3096} INFO - Sync 1 DAGs
+[2026-05-06T01:35:49.807+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:35:49.807+0000] {dag.py:3954} INFO - Setting next_dagrun for diabetes_mlops_pipeline to 2026-05-05 00:00:00+00:00, run_after=2026-05-06 00:00:00+00:00
+[2026-05-06T01:35:49.821+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/mlops_pipeline.py took 1.523 seconds
+[2026-05-06T01:36:19.984+0000] {processor.py:161} INFO - Started process (PID=216) to work on /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:36:19.985+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/mlops_pipeline.py for tasks to queue
+[2026-05-06T01:36:19.987+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:36:19.987+0000] {dagbag.py:545} INFO - Filling up the DagBag from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:36:21.711+0000] {processor.py:840} INFO - DAG(s) 'diabetes_mlops_pipeline' retrieved from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:36:21.740+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:36:21.739+0000] {dag.py:3096} INFO - Sync 1 DAGs
+[2026-05-06T01:36:21.756+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:36:21.755+0000] {dag.py:3954} INFO - Setting next_dagrun for diabetes_mlops_pipeline to 2026-05-05 00:00:00+00:00, run_after=2026-05-06 00:00:00+00:00
+[2026-05-06T01:36:21.773+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/mlops_pipeline.py took 1.794 seconds
+[2026-05-06T01:36:51.949+0000] {processor.py:161} INFO - Started process (PID=276) to work on /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:36:51.950+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/mlops_pipeline.py for tasks to queue
+[2026-05-06T01:36:51.952+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:36:51.952+0000] {dagbag.py:545} INFO - Filling up the DagBag from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:36:53.459+0000] {processor.py:840} INFO - DAG(s) 'diabetes_mlops_pipeline' retrieved from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:36:53.481+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:36:53.480+0000] {dag.py:3096} INFO - Sync 1 DAGs
+[2026-05-06T01:36:53.497+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:36:53.497+0000] {dag.py:3954} INFO - Setting next_dagrun for diabetes_mlops_pipeline to 2026-05-06 00:00:00+00:00, run_after=2026-05-07 00:00:00+00:00
+[2026-05-06T01:36:53.517+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/mlops_pipeline.py took 1.574 seconds
+[2026-05-06T01:37:23.693+0000] {processor.py:161} INFO - Started process (PID=298) to work on /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:37:23.694+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/mlops_pipeline.py for tasks to queue
+[2026-05-06T01:37:23.696+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:37:23.696+0000] {dagbag.py:545} INFO - Filling up the DagBag from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:37:25.219+0000] {processor.py:840} INFO - DAG(s) 'diabetes_mlops_pipeline' retrieved from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:37:25.238+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:37:25.238+0000] {dag.py:3096} INFO - Sync 1 DAGs
+[2026-05-06T01:37:25.254+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:37:25.254+0000] {dag.py:3954} INFO - Setting next_dagrun for diabetes_mlops_pipeline to 2026-05-06 00:00:00+00:00, run_after=2026-05-07 00:00:00+00:00
+[2026-05-06T01:37:25.272+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/mlops_pipeline.py took 1.583 seconds
+[2026-05-06T01:37:55.425+0000] {processor.py:161} INFO - Started process (PID=320) to work on /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:37:55.426+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/mlops_pipeline.py for tasks to queue
+[2026-05-06T01:37:55.428+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:37:55.427+0000] {dagbag.py:545} INFO - Filling up the DagBag from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:37:56.991+0000] {processor.py:840} INFO - DAG(s) 'diabetes_mlops_pipeline' retrieved from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:37:57.014+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:37:57.013+0000] {dag.py:3096} INFO - Sync 1 DAGs
+[2026-05-06T01:37:57.031+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:37:57.031+0000] {dag.py:3954} INFO - Setting next_dagrun for diabetes_mlops_pipeline to 2026-05-06 00:00:00+00:00, run_after=2026-05-07 00:00:00+00:00
+[2026-05-06T01:37:57.046+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/mlops_pipeline.py took 1.626 seconds
+[2026-05-06T01:38:27.228+0000] {processor.py:161} INFO - Started process (PID=342) to work on /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:38:27.229+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/mlops_pipeline.py for tasks to queue
+[2026-05-06T01:38:27.230+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:38:27.230+0000] {dagbag.py:545} INFO - Filling up the DagBag from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:38:28.795+0000] {processor.py:840} INFO - DAG(s) 'diabetes_mlops_pipeline' retrieved from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:38:28.819+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:38:28.819+0000] {dag.py:3096} INFO - Sync 1 DAGs
+[2026-05-06T01:38:28.835+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:38:28.835+0000] {dag.py:3954} INFO - Setting next_dagrun for diabetes_mlops_pipeline to 2026-05-06 00:00:00+00:00, run_after=2026-05-07 00:00:00+00:00
+[2026-05-06T01:38:28.856+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/mlops_pipeline.py took 1.634 seconds
+[2026-05-06T01:38:59.013+0000] {processor.py:161} INFO - Started process (PID=364) to work on /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:38:59.014+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/mlops_pipeline.py for tasks to queue
+[2026-05-06T01:38:59.016+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:38:59.015+0000] {dagbag.py:545} INFO - Filling up the DagBag from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:39:00.564+0000] {processor.py:840} INFO - DAG(s) 'diabetes_mlops_pipeline' retrieved from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:39:00.585+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:39:00.585+0000] {dag.py:3096} INFO - Sync 1 DAGs
+[2026-05-06T01:39:00.603+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:39:00.603+0000] {dag.py:3954} INFO - Setting next_dagrun for diabetes_mlops_pipeline to 2026-05-06 00:00:00+00:00, run_after=2026-05-07 00:00:00+00:00
+[2026-05-06T01:39:00.624+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/mlops_pipeline.py took 1.616 seconds
+[2026-05-06T01:39:30.814+0000] {processor.py:161} INFO - Started process (PID=386) to work on /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:39:30.815+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/mlops_pipeline.py for tasks to queue
+[2026-05-06T01:39:30.817+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:39:30.816+0000] {dagbag.py:545} INFO - Filling up the DagBag from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:39:32.294+0000] {processor.py:840} INFO - DAG(s) 'diabetes_mlops_pipeline' retrieved from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:39:32.315+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:39:32.314+0000] {dag.py:3096} INFO - Sync 1 DAGs
+[2026-05-06T01:39:32.334+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:39:32.334+0000] {dag.py:3954} INFO - Setting next_dagrun for diabetes_mlops_pipeline to 2026-05-06 00:00:00+00:00, run_after=2026-05-07 00:00:00+00:00
+[2026-05-06T01:39:32.356+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/mlops_pipeline.py took 1.547 seconds
+[2026-05-06T01:54:10.602+0000] {processor.py:161} INFO - Started process (PID=409) to work on /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:54:10.603+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/mlops_pipeline.py for tasks to queue
+[2026-05-06T01:54:10.610+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:54:10.609+0000] {dagbag.py:545} INFO - Filling up the DagBag from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:54:14.459+0000] {processor.py:840} INFO - DAG(s) 'diabetes_mlops_pipeline' retrieved from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:54:14.515+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:54:14.515+0000] {dag.py:3096} INFO - Sync 1 DAGs
+[2026-05-06T01:54:14.553+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:54:14.553+0000] {dag.py:3954} INFO - Setting next_dagrun for diabetes_mlops_pipeline to 2026-05-06 00:00:00+00:00, run_after=2026-05-07 00:00:00+00:00
+[2026-05-06T01:54:14.575+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/mlops_pipeline.py took 3.989 seconds
+[2026-05-06T01:55:04.900+0000] {processor.py:161} INFO - Started process (PID=469) to work on /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:55:04.903+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/mlops_pipeline.py for tasks to queue
+[2026-05-06T01:55:04.908+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:55:04.907+0000] {dagbag.py:545} INFO - Filling up the DagBag from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:55:08.647+0000] {processor.py:840} INFO - DAG(s) 'diabetes_mlops_pipeline' retrieved from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:55:08.692+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:55:08.691+0000] {dag.py:3096} INFO - Sync 1 DAGs
+[2026-05-06T01:55:08.730+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:55:08.729+0000] {dag.py:3954} INFO - Setting next_dagrun for diabetes_mlops_pipeline to 2026-05-06 00:00:00+00:00, run_after=2026-05-07 00:00:00+00:00
+[2026-05-06T01:55:08.769+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/mlops_pipeline.py took 3.902 seconds
+[2026-05-06T01:58:55.474+0000] {processor.py:161} INFO - Started process (PID=492) to work on /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:58:55.476+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/mlops_pipeline.py for tasks to queue
+[2026-05-06T01:58:55.482+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:58:55.480+0000] {dagbag.py:545} INFO - Filling up the DagBag from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:58:59.340+0000] {processor.py:840} INFO - DAG(s) 'diabetes_mlops_pipeline' retrieved from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:58:59.387+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:58:59.387+0000] {dag.py:3096} INFO - Sync 1 DAGs
+[2026-05-06T01:58:59.424+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:58:59.424+0000] {dag.py:3954} INFO - Setting next_dagrun for diabetes_mlops_pipeline to 2026-05-06 00:00:00+00:00, run_after=2026-05-07 00:00:00+00:00
+[2026-05-06T01:58:59.466+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/mlops_pipeline.py took 4.008 seconds
+[2026-05-06T01:59:37.426+0000] {processor.py:161} INFO - Started process (PID=514) to work on /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:59:37.432+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/mlops_pipeline.py for tasks to queue
+[2026-05-06T01:59:37.448+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:59:37.445+0000] {dagbag.py:545} INFO - Filling up the DagBag from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:59:41.240+0000] {processor.py:840} INFO - DAG(s) 'diabetes_mlops_pipeline' retrieved from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T01:59:41.284+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:59:41.283+0000] {dag.py:3096} INFO - Sync 1 DAGs
+[2026-05-06T01:59:41.324+0000] {logging_mixin.py:188} INFO - [2026-05-06T01:59:41.323+0000] {dag.py:3954} INFO - Setting next_dagrun for diabetes_mlops_pipeline to 2026-05-06 00:00:00+00:00, run_after=2026-05-07 00:00:00+00:00
+[2026-05-06T01:59:41.363+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/mlops_pipeline.py took 3.952 seconds
+[2026-05-06T02:00:12.388+0000] {processor.py:161} INFO - Started process (PID=536) to work on /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T02:00:12.390+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/mlops_pipeline.py for tasks to queue
+[2026-05-06T02:00:12.395+0000] {logging_mixin.py:188} INFO - [2026-05-06T02:00:12.394+0000] {dagbag.py:545} INFO - Filling up the DagBag from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T02:00:15.988+0000] {processor.py:840} INFO - DAG(s) 'diabetes_mlops_pipeline' retrieved from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T02:00:16.037+0000] {logging_mixin.py:188} INFO - [2026-05-06T02:00:16.036+0000] {dag.py:3096} INFO - Sync 1 DAGs
+[2026-05-06T02:00:16.076+0000] {logging_mixin.py:188} INFO - [2026-05-06T02:00:16.076+0000] {dag.py:3954} INFO - Setting next_dagrun for diabetes_mlops_pipeline to 2026-05-06 00:00:00+00:00, run_after=2026-05-07 00:00:00+00:00
+[2026-05-06T02:00:16.109+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/mlops_pipeline.py took 3.733 seconds
+[2026-05-06T02:01:03.454+0000] {processor.py:161} INFO - Started process (PID=558) to work on /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T02:01:03.461+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/mlops_pipeline.py for tasks to queue
+[2026-05-06T02:01:03.474+0000] {logging_mixin.py:188} INFO - [2026-05-06T02:01:03.472+0000] {dagbag.py:545} INFO - Filling up the DagBag from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T02:01:07.313+0000] {processor.py:840} INFO - DAG(s) 'diabetes_mlops_pipeline' retrieved from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T02:01:07.364+0000] {logging_mixin.py:188} INFO - [2026-05-06T02:01:07.363+0000] {dag.py:3096} INFO - Sync 1 DAGs
+[2026-05-06T02:01:07.402+0000] {logging_mixin.py:188} INFO - [2026-05-06T02:01:07.401+0000] {dag.py:3954} INFO - Setting next_dagrun for diabetes_mlops_pipeline to 2026-05-06 00:00:00+00:00, run_after=2026-05-07 00:00:00+00:00
+[2026-05-06T02:01:07.434+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/mlops_pipeline.py took 4.016 seconds
+[2026-05-06T02:38:36.638+0000] {processor.py:161} INFO - Started process (PID=581) to work on /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T02:38:36.640+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/mlops_pipeline.py for tasks to queue
+[2026-05-06T02:38:36.645+0000] {logging_mixin.py:188} INFO - [2026-05-06T02:38:36.644+0000] {dagbag.py:545} INFO - Filling up the DagBag from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T02:38:40.528+0000] {processor.py:840} INFO - DAG(s) 'diabetes_mlops_pipeline' retrieved from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T02:38:40.572+0000] {logging_mixin.py:188} INFO - [2026-05-06T02:38:40.571+0000] {dag.py:3096} INFO - Sync 1 DAGs
+[2026-05-06T02:38:40.617+0000] {logging_mixin.py:188} INFO - [2026-05-06T02:38:40.616+0000] {dag.py:3954} INFO - Setting next_dagrun for diabetes_mlops_pipeline to 2026-05-06 00:00:00+00:00, run_after=2026-05-07 00:00:00+00:00
+[2026-05-06T02:38:40.654+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/mlops_pipeline.py took 4.048 seconds
+[2026-05-06T14:21:29.480+0000] {processor.py:161} INFO - Started process (PID=610) to work on /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T14:21:29.483+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/mlops_pipeline.py for tasks to queue
+[2026-05-06T14:21:29.485+0000] {logging_mixin.py:188} INFO - [2026-05-06T14:21:29.484+0000] {dagbag.py:545} INFO - Filling up the DagBag from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T14:21:33.444+0000] {processor.py:840} INFO - DAG(s) 'diabetes_mlops_pipeline' retrieved from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T14:21:33.488+0000] {logging_mixin.py:188} INFO - [2026-05-06T14:21:33.487+0000] {dag.py:3096} INFO - Sync 1 DAGs
+[2026-05-06T14:21:33.526+0000] {logging_mixin.py:188} INFO - [2026-05-06T14:21:33.526+0000] {dag.py:3954} INFO - Setting next_dagrun for diabetes_mlops_pipeline to 2026-05-06 00:00:00+00:00, run_after=2026-05-07 00:00:00+00:00
+[2026-05-06T14:21:33.548+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/mlops_pipeline.py took 4.079 seconds
+[2026-05-06T22:16:54.872+0000] {processor.py:161} INFO - Started process (PID=634) to work on /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T22:16:54.876+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/mlops_pipeline.py for tasks to queue
+[2026-05-06T22:16:54.882+0000] {logging_mixin.py:188} INFO - [2026-05-06T22:16:54.879+0000] {dagbag.py:545} INFO - Filling up the DagBag from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T22:16:58.554+0000] {processor.py:840} INFO - DAG(s) 'diabetes_mlops_pipeline' retrieved from /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T22:16:58.612+0000] {logging_mixin.py:188} INFO - [2026-05-06T22:16:58.611+0000] {dag.py:3096} INFO - Sync 1 DAGs
+[2026-05-06T22:16:58.647+0000] {logging_mixin.py:188} INFO - [2026-05-06T22:16:58.647+0000] {dag.py:3954} INFO - Setting next_dagrun for diabetes_mlops_pipeline to 2026-05-06 00:00:00+00:00, run_after=2026-05-07 00:00:00+00:00
+[2026-05-06T22:16:58.683+0000] {processor.py:183} INFO - Processing /opt/airflow/dags/mlops_pipeline.py took 3.823 seconds
+[2026-05-06T22:17:28.984+0000] {processor.py:161} INFO - Started process (PID=656) to work on /opt/airflow/dags/mlops_pipeline.py
+[2026-05-06T22:17:28.986+0000] {processor.py:830} INFO - Processing file /opt/airflow/dags/mlops_pipeline.py for tasks to queue
+[2026-05-06T22:17:28.988+0000] {logging_mixin.py:188} INFO - [2026-05-06T22:17:28.988+0000] {dagbag.py:545} INFO - Filling up the DagBag from /opt/airflow/dags/mlops_pipeline.py
