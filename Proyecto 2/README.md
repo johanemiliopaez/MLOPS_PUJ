@@ -431,7 +431,7 @@ kubectl get nodes
 kubectl apply -k "Proyecto 2/k8s"
 ```
 <center>
-<img width="891" height="201" alt="image" src="https://github.com/user-attachments/assets/073a4436-debe-4f8f-9784-fb37b8baf14f" />
+<img width="870" height="244" alt="image" src="https://github.com/user-attachments/assets/fdd3b129-8d72-43c0-b926-e3b3a1d7deef" />
 </center>
 
 Esto crea:
