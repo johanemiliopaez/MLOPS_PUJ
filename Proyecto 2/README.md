@@ -410,6 +410,10 @@ docker push innovacion/proyecto2-locust:latest
 
 > El deployment de la API usa `innovacion/proyecto2-api:latest` con `imagePullPolicy: Always`. Si en algún despliegue ves que sigue corriendo código viejo (caché por digest), retaggea con un sufijo (`docker tag .. :v2 && docker push`) y actualiza `k8s/05-api.yaml` para forzar el rollout.
 
+<center>
+<img width="1662" height="397" alt="image" src="https://github.com/user-attachments/assets/f8bc8b64-be2b-4313-9acf-e619f49a5598" />
+</center>
+
 ---
 
 ## Despliegue en Kubernetes
