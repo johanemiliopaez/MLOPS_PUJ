@@ -489,6 +489,21 @@ URLs y credenciales por defecto:
 | API Swagger | <http://127.0.0.1:8000/docs> | — |
 | MinIO Console | <http://127.0.0.1:9001> | `minioadmin` / `minioadmin123` |
 
+<center> 
+<img width="1483" height="562" alt="image" src="https://github.com/user-attachments/assets/b4d31b48-1d9e-4c4d-a8ae-b6e33f1f5fa0" />
+<img width="1122" height="859" alt="image" src="https://github.com/user-attachments/assets/f67ad0a3-2cc6-4e1d-a1ad-26865b7ebd0a" />
+<img width="1479" height="426" alt="image" src="https://github.com/user-attachments/assets/490011e0-303d-4282-ac0b-42c8a068f1ba" />
+<img width="1487" height="564" alt="image" src="https://github.com/user-attachments/assets/bab66d6a-54e7-453f-9091-9bd450f1fdb3" />
+<img width="1478" height="651" alt="image" src="https://github.com/user-attachments/assets/0d28ce36-535c-4829-a602-5d7936767d44" />
+<img width="1476" height="834" alt="image" src="https://github.com/user-attachments/assets/4786f90a-c98e-4e31-bc1a-52f1cbdc0242" />
+<img width="1470" height="694" alt="image" src="https://github.com/user-attachments/assets/be9ad0d4-28e3-4e8b-b865-311b20787539" />
+</center>
+
+
+
+
+
+
 > Las credenciales viven en `k8s/01-config-and-secrets.yaml`. **Cámbialas antes de ir a producción.**
 
 ### Bootstrap del primer modelo
