@@ -473,6 +473,9 @@ kubectl port-forward svc/locust            -n mlops-proyecto2 8089:8089
 kubectl port-forward svc/api               -n mlops-proyecto2 8000:8000
 kubectl port-forward svc/minio             -n mlops-proyecto2 9001:9001
 ```
+<center><img width="1203" height="206" alt="image" src="https://github.com/user-attachments/assets/56724b0b-239c-45dd-b56b-5416975727e2" />
+</center>
+
 
 URLs y credenciales por defecto:
 
