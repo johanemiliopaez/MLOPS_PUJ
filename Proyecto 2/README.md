@@ -430,6 +430,9 @@ kubectl get nodes
 ```bash
 kubectl apply -k "Proyecto 2/k8s"
 ```
+<center>
+<img width="891" height="201" alt="image" src="https://github.com/user-attachments/assets/073a4436-debe-4f8f-9784-fb37b8baf14f" />
+</center>
 
 Esto crea:
 
