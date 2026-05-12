@@ -339,12 +339,6 @@ La UI **solo habla con la API**, nunca directamente con MLflow ni con la base.
 - `POST /predict` con un payload de ejemplo.
 - `GET /health`.
 
-Sugerencia para sustentación:
-
-- Subir gradualmente usuarios concurrentes.
-- Observar en Grafana cómo evolucionan **RPS**, **errores** y **latencia p95** de `/predict`.
-- Reportar el punto donde la API empieza a degradarse según los `requests/limits` configurados.
-
 ---
 
 ## Observabilidad (Prometheus + Grafana)
@@ -382,12 +376,6 @@ docker build -f airflow/Dockerfile    -t innovacion/proyecto2-airflow:latest   .
 docker build -f locust/Dockerfile     -t innovacion/proyecto2-locust:latest    .
 ```
 
-> Si Docker Desktop reporta `input/output error` o falta de espacio en `BuildKit`, usar el builder clásico:
->
-> ```bash
-> DOCKER_BUILDKIT=0 docker build ...
-> ```
-
 Publicar en Docker Hub:
 
 ```bash
@@ -397,8 +385,6 @@ docker push innovacion/proyecto2-streamlit:latest
 docker push innovacion/proyecto2-airflow:latest
 docker push innovacion/proyecto2-locust:latest
 ```
-
-> El deployment de la API usa `innovacion/proyecto2-api:latest` con `imagePullPolicy: Always`. Si en algún despliegue ves que sigue corriendo código viejo (caché por digest), retaggea con un sufijo (`docker tag .. :v2 && docker push`) y actualiza `k8s/05-api.yaml` para forzar el rollout.
 
 <center>
 <img width="1662" height="397" alt="image" src="https://github.com/user-attachments/assets/f8bc8b64-be2b-4313-9acf-e619f49a5598" />
