@@ -20,10 +20,8 @@ Toda la solución está pensada desde el inicio para correr en un clúster de Ku
 10. [Imágenes Docker](#imágenes-docker)
 11. [Despliegue en Kubernetes](#despliegue-en-kubernetes)
 12. [Acceso local a las UIs](#acceso-local-a-las-uis)
-13. [Variables y secretos](#variables-y-secretos)
-14. [Cumplimiento del enunciado](#cumplimiento-del-enunciado)
-15. [Troubleshooting](#troubleshooting)
-16. [Pendientes naturales](#pendientes-naturales)
+14. [Cumplimiento del Proyecto ](#cumplimiento-del-enunciado)
+
 
 ---
 
@@ -267,14 +265,6 @@ FastAPI multi-réplica (2 pods por defecto) con cache de modelo.
 | POST | `/predict` | Recibe `{"features": {...}}`, ejecuta la inferencia, persiste el log y devuelve la predicción. |
 | GET | `/metrics` | Métricas en formato Prometheus. |
 
-### Carga dinámica del modelo
-
-- La API **no tiene rutas locales quemadas**.
-- En `startup` (y bajo demanda) consulta MLflow:
-  1. intenta `models:/<MODEL_NAME>@<ALIAS>` (ej. `champion`),
-  2. si falla, busca la última versión registrada o la que esté en stage `Production`.
-- Hay un **TTL de cache** configurable (`MODEL_CACHE_TTL_SECONDS`, default 300 s) que fuerza la recarga periódica.
-- Si Postgres o MLflow aún no están listos, la API arranca igual en modo `degraded` y se recupera sola.
 
 ### Request/response
 
@@ -537,39 +527,10 @@ Hasta que el DAG no haya corrido al menos una vez, la API responde `status=degra
 
 
 
----
-
-## Variables y secretos
-
-Se inyectan a los contenedores vía `envFrom` (`ConfigMap` + `Secret`).
-
-### `proyecto2-config` (ConfigMap)
-
-| Variable | Default | Uso |
-|---|---|---|
-| `POSTGRES_HOST` / `POSTGRES_PORT` | `postgres` / `5432` | Conexión común. |
-| `DATA_DB` / `MLFLOW_DB` / `AIRFLOW_DB` | `mlops_data` / `mlflow_meta` / `airflow_meta` | Bases separadas por dominio. |
-| `MLFLOW_TRACKING_URI` | `http://mlflow:5000` | Tracking + Registry. |
-| `MLFLOW_MODEL_NAME` | `DiabetesReadmissionModel` | Nombre registrado. |
-| `MLFLOW_MODEL_ALIAS` | `champion` | Alias de productivo. |
-| `MLFLOW_S3_ENDPOINT_URL` | `http://minio:9000` | Artifacts. |
-| `MINIO_BUCKET` | `mlflow-artifacts` | Bucket de artefactos. |
-| `DATASET_URL` | Google Drive del dataset modificado | Fuente del CSV. |
-| `DATASET_PATH` | `/opt/project/data/Diabetes.csv` | Ruta dentro del pod. |
-| `TARGET_COLUMN` | `readmitted` | Variable a predecir. |
-| `BATCH_SIZE` | `15000` | Máximo registros por ejecución. |
-| `API_URL` | `http://api:8000` | Usado por Streamlit y Locust. |
-| `AIRFLOW__CORE__EXECUTOR` | `LocalExecutor` | No SQLite. |
-
-### `proyecto2-secrets` (Secret)
-
-`POSTGRES_USER`, `POSTGRES_PASSWORD`, `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AIRFLOW__CORE__FERNET_KEY`, `AIRFLOW__DATABASE__SQL_ALCHEMY_CONN`, `AIRFLOW_ADMIN_USERNAME`, `AIRFLOW_ADMIN_PASSWORD`.
-
-> El archivo `.env.example` lista las variables equivalentes para correr scripts en local fuera de Kubernetes.
 
 ---
 
-## Cumplimiento del enunciado
+## Cumplimiento del Proyecto
 
 Mapeo punto a punto contra `MLOPS_Proyecto2_2026.pdf`:
 
