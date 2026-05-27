@@ -3,7 +3,7 @@ name: inference-api-ci-cd
 on:
   push:
     branches:
-      - main
+      - prueba_actions
 
     paths:
       - 'mlops_proyecto2/api/**'
