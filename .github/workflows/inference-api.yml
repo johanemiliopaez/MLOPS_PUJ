@@ -72,7 +72,7 @@ jobs:
       run: |
         docker build \
           -t massimomg/mlops-api:${{ github.sha }} \
-          mlops_proyecto2/api
+          ./mlops_proyecto2/api
 
     # =========================
     # 7. Push Docker image
