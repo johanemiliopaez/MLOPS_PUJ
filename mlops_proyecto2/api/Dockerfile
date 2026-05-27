@@ -2,7 +2,7 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-#LALALALALAL
+# cometnario de prueba para verificar cambio
 # Copiar dependencias e instalarlas
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
