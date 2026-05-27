@@ -1,0 +1,38 @@
+[2026-05-27T02:33:30.338+0000] {local_task_job_runner.py:120} INFO - ::group::Pre task execution logs
+[2026-05-27T02:33:30.370+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: real_estate_mlops_pipeline.validate_schema manual__2026-05-27T02:31:03.363362+00:00 [queued]>
+[2026-05-27T02:33:30.379+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: real_estate_mlops_pipeline.validate_schema manual__2026-05-27T02:31:03.363362+00:00 [queued]>
+[2026-05-27T02:33:30.379+0000] {taskinstance.py:2306} INFO - Starting attempt 1 of 3
+[2026-05-27T02:33:30.394+0000] {taskinstance.py:2330} INFO - Executing <Task(PythonOperator): validate_schema> on 2026-05-27 02:31:03.363362+00:00
+[2026-05-27T02:33:30.410+0000] {standard_task_runner.py:90} INFO - Running: ['airflow', 'tasks', 'run', 'real_estate_mlops_pipeline', 'validate_schema', 'manual__2026-05-27T02:31:03.363362+00:00', '--job-id', '8', '--raw', '--subdir', 'DAGS_FOLDER/mlops_pipeline.py', '--cfg-path', '/tmp/tmp7hbfd3if']
+[2026-05-27T02:33:30.412+0000] {logging_mixin.py:188} WARNING - /home/airflow/.local/lib/python3.12/site-packages/airflow/task/task_runner/standard_task_runner.py:61 DeprecationWarning: This process (pid=1936) is multi-threaded, use of fork() may lead to deadlocks in the child.
+[2026-05-27T02:33:30.413+0000] {standard_task_runner.py:91} INFO - Job 8: Subtask validate_schema
+[2026-05-27T02:33:30.413+0000] {standard_task_runner.py:63} INFO - Started process 1954 to run task
+[2026-05-27T02:33:30.476+0000] {task_command.py:426} INFO - Running <TaskInstance: real_estate_mlops_pipeline.validate_schema manual__2026-05-27T02:31:03.363362+00:00 [running]> on host 86717520d88f
+[2026-05-27T02:33:30.564+0000] {taskinstance.py:2648} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops_team' AIRFLOW_CTX_DAG_ID='real_estate_mlops_pipeline' AIRFLOW_CTX_TASK_ID='validate_schema' AIRFLOW_CTX_EXECUTION_DATE='2026-05-27T02:31:03.363362+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='manual__2026-05-27T02:31:03.363362+00:00'
+[2026-05-27T02:33:30.565+0000] {taskinstance.py:430} INFO - ::endgroup::
+[2026-05-27T02:33:30.712+0000] {taskinstance.py:441} INFO - ::group::Post task execution logs
+[2026-05-27T02:33:30.713+0000] {taskinstance.py:2905} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 465, in _execute_task
+    result = _execute_callable(context=context, **execute_callable_kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 432, in _execute_callable
+    return execute_callable(context=context, **execute_callable_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/baseoperator.py", line 400, in wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/operators/python.py", line 235, in execute
+    return_value = self.execute_callable()
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/operators/python.py", line 252, in execute_callable
+    return self.python_callable(*self.op_args, **self.op_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/dags/mlops_pipeline.py", line 87, in _validate_schema
+    raise ValueError(f"Fallo de Esquema: Columnas faltantes obligatorias: {missing_cols}")
+ValueError: Fallo de Esquema: Columnas faltantes obligatorias: ['bed', 'bath', 'acre_lot', 'house_size', 'price', 'status', 'city', 'state']
+[2026-05-27T02:33:30.728+0000] {taskinstance.py:1206} INFO - Marking task as UP_FOR_RETRY. dag_id=real_estate_mlops_pipeline, task_id=validate_schema, run_id=manual__2026-05-27T02:31:03.363362+00:00, execution_date=20260527T023103, start_date=20260527T023330, end_date=20260527T023330
+[2026-05-27T02:33:30.741+0000] {standard_task_runner.py:110} ERROR - Failed to execute job 8 for task validate_schema (Fallo de Esquema: Columnas faltantes obligatorias: ['bed', 'bath', 'acre_lot', 'house_size', 'price', 'status', 'city', 'state']; 1954)
+[2026-05-27T02:33:30.792+0000] {local_task_job_runner.py:240} INFO - Task exited with return code 1
+[2026-05-27T02:33:30.821+0000] {taskinstance.py:3498} INFO - 0 downstream tasks scheduled from follow-on schedule check
+[2026-05-27T02:33:30.825+0000] {local_task_job_runner.py:222} INFO - ::endgroup::

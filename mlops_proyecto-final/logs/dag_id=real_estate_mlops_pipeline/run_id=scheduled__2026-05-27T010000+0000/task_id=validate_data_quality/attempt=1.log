@@ -1,0 +1,38 @@
+[2026-05-27T02:43:25.259+0000] {local_task_job_runner.py:120} INFO - ::group::Pre task execution logs
+[2026-05-27T02:43:25.289+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: real_estate_mlops_pipeline.validate_data_quality scheduled__2026-05-27T01:00:00+00:00 [queued]>
+[2026-05-27T02:43:25.297+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: real_estate_mlops_pipeline.validate_data_quality scheduled__2026-05-27T01:00:00+00:00 [queued]>
+[2026-05-27T02:43:25.298+0000] {taskinstance.py:2306} INFO - Starting attempt 1 of 3
+[2026-05-27T02:43:25.313+0000] {taskinstance.py:2330} INFO - Executing <Task(PythonOperator): validate_data_quality> on 2026-05-27 01:00:00+00:00
+[2026-05-27T02:43:25.331+0000] {logging_mixin.py:188} WARNING - /home/airflow/.local/lib/python3.12/site-packages/airflow/task/task_runner/standard_task_runner.py:61 DeprecationWarning: This process (pid=2865) is multi-threaded, use of fork() may lead to deadlocks in the child.
+[2026-05-27T02:43:25.332+0000] {standard_task_runner.py:63} INFO - Started process 2901 to run task
+[2026-05-27T02:43:25.331+0000] {standard_task_runner.py:90} INFO - Running: ['airflow', 'tasks', 'run', 'real_estate_mlops_pipeline', 'validate_data_quality', 'scheduled__2026-05-27T01:00:00+00:00', '--job-id', '33', '--raw', '--subdir', 'DAGS_FOLDER/mlops_pipeline.py', '--cfg-path', '/tmp/tmpbl_7a6i9']
+[2026-05-27T02:43:25.333+0000] {standard_task_runner.py:91} INFO - Job 33: Subtask validate_data_quality
+[2026-05-27T02:43:25.392+0000] {task_command.py:426} INFO - Running <TaskInstance: real_estate_mlops_pipeline.validate_data_quality scheduled__2026-05-27T01:00:00+00:00 [running]> on host 86717520d88f
+[2026-05-27T02:43:25.485+0000] {taskinstance.py:2648} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops_team' AIRFLOW_CTX_DAG_ID='real_estate_mlops_pipeline' AIRFLOW_CTX_TASK_ID='validate_data_quality' AIRFLOW_CTX_EXECUTION_DATE='2026-05-27T01:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2026-05-27T01:00:00+00:00'
+[2026-05-27T02:43:25.487+0000] {taskinstance.py:430} INFO - ::endgroup::
+[2026-05-27T02:43:33.620+0000] {taskinstance.py:441} INFO - ::group::Post task execution logs
+[2026-05-27T02:43:33.621+0000] {taskinstance.py:2905} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 465, in _execute_task
+    result = _execute_callable(context=context, **execute_callable_kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 432, in _execute_callable
+    return execute_callable(context=context, **execute_callable_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/baseoperator.py", line 400, in wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/operators/python.py", line 235, in execute
+    return_value = self.execute_callable()
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/operators/python.py", line 252, in execute_callable
+    return self.python_callable(*self.op_args, **self.op_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/dags/mlops_pipeline.py", line 110, in _validate_data_quality
+    raise ValueError(f"Fallo de Calidad: Demasiados valores nulos en el target 'price' ({null_prices})")
+ValueError: Fallo de Calidad: Demasiados valores nulos en el target 'price' (94551)
+[2026-05-27T02:43:33.636+0000] {taskinstance.py:1206} INFO - Marking task as UP_FOR_RETRY. dag_id=real_estate_mlops_pipeline, task_id=validate_data_quality, run_id=scheduled__2026-05-27T01:00:00+00:00, execution_date=20260527T010000, start_date=20260527T024325, end_date=20260527T024333
+[2026-05-27T02:43:33.651+0000] {standard_task_runner.py:110} ERROR - Failed to execute job 33 for task validate_data_quality (Fallo de Calidad: Demasiados valores nulos en el target 'price' (94551); 2901)
+[2026-05-27T02:43:33.812+0000] {local_task_job_runner.py:240} INFO - Task exited with return code 1
+[2026-05-27T02:43:33.838+0000] {taskinstance.py:3498} INFO - 0 downstream tasks scheduled from follow-on schedule check
+[2026-05-27T02:43:33.852+0000] {local_task_job_runner.py:222} INFO - ::endgroup::

@@ -1,0 +1,96 @@
+[2026-05-27T03:11:12.525+0000] {local_task_job_runner.py:120} INFO - ::group::Pre task execution logs
+[2026-05-27T03:11:12.553+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: real_estate_mlops_pipeline.register_candidate_in_mlflow scheduled__2026-05-27T02:00:00+00:00 [queued]>
+[2026-05-27T03:11:12.561+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: real_estate_mlops_pipeline.register_candidate_in_mlflow scheduled__2026-05-27T02:00:00+00:00 [queued]>
+[2026-05-27T03:11:12.562+0000] {taskinstance.py:2306} INFO - Starting attempt 1 of 3
+[2026-05-27T03:11:12.575+0000] {taskinstance.py:2330} INFO - Executing <Task(PythonOperator): register_candidate_in_mlflow> on 2026-05-27 02:00:00+00:00
+[2026-05-27T03:11:12.632+0000] {logging_mixin.py:188} WARNING - /home/airflow/.local/lib/python3.12/site-packages/airflow/task/task_runner/standard_task_runner.py:61 DeprecationWarning: This process (pid=4806) is multi-threaded, use of fork() may lead to deadlocks in the child.
+[2026-05-27T03:11:12.631+0000] {standard_task_runner.py:90} INFO - Running: ['airflow', 'tasks', 'run', 'real_estate_mlops_pipeline', 'register_candidate_in_mlflow', 'scheduled__2026-05-27T02:00:00+00:00', '--job-id', '70', '--raw', '--subdir', 'DAGS_FOLDER/mlops_pipeline.py', '--cfg-path', '/tmp/tmp89j43qvo']
+[2026-05-27T03:11:12.640+0000] {standard_task_runner.py:63} INFO - Started process 4844 to run task
+[2026-05-27T03:11:12.640+0000] {standard_task_runner.py:91} INFO - Job 70: Subtask register_candidate_in_mlflow
+[2026-05-27T03:11:12.708+0000] {task_command.py:426} INFO - Running <TaskInstance: real_estate_mlops_pipeline.register_candidate_in_mlflow scheduled__2026-05-27T02:00:00+00:00 [running]> on host 86717520d88f
+[2026-05-27T03:11:12.793+0000] {taskinstance.py:2648} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops_team' AIRFLOW_CTX_DAG_ID='real_estate_mlops_pipeline' AIRFLOW_CTX_TASK_ID='register_candidate_in_mlflow' AIRFLOW_CTX_EXECUTION_DATE='2026-05-27T02:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2026-05-27T02:00:00+00:00'
+[2026-05-27T03:11:12.795+0000] {taskinstance.py:430} INFO - ::endgroup::
+[2026-05-27T03:11:14.608+0000] {logging_mixin.py:188} WARNING - 2026/05/27 03:11:14 WARNING mlflow.utils.git_utils: Failed to import Git (the Git executable is probably not on your PATH), so Git SHA is not available. Error: Failed to initialize: Bad git executable.
+The git executable must be specified in one of the following ways:
+    - be included in your $PATH
+    - be set via $GIT_PYTHON_GIT_EXECUTABLE
+    - explicitly set via git.refresh(<full-path-to-git-executable>)
+
+All git commands will error until this is rectified.
+
+This initial message can be silenced or aggravated in the future by setting the
+$GIT_PYTHON_REFRESH environment variable. Use one of the following values:
+    - quiet|q|silence|s|silent|none|n|0: for no message or exception
+    - warn|w|warning|log|l|1: for a warning message (logging level CRITICAL, displayed by default)
+    - error|e|exception|raise|r|2: for a raised exception
+
+Example:
+    export GIT_PYTHON_REFRESH=quiet
+[2026-05-27T03:17:53.699+0000] {local_task_job_runner.py:124} ERROR - Received SIGTERM. Terminating subprocesses
+[2026-05-27T03:17:53.705+0000] {process_utils.py:132} INFO - Sending 15 to group 4844. PIDs of all processes in the group: [4844]
+[2026-05-27T03:17:53.707+0000] {process_utils.py:87} INFO - Sending the signal 15 to group 4844
+[2026-05-27T03:17:53.708+0000] {taskinstance.py:2611} ERROR - Received SIGTERM. Terminating subprocesses.
+[2026-05-27T03:17:53.814+0000] {taskinstance.py:441} INFO - ::group::Post task execution logs
+[2026-05-27T03:17:53.848+0000] {taskinstance.py:2905} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 465, in _execute_task
+    result = _execute_callable(context=context, **execute_callable_kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 432, in _execute_callable
+    return execute_callable(context=context, **execute_callable_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/baseoperator.py", line 400, in wrapper
+    return func(self, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/operators/python.py", line 235, in execute
+    return_value = self.execute_callable()
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/operators/python.py", line 252, in execute_callable
+    return self.python_callable(*self.op_args, **self.op_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/airflow/dags/mlops_pipeline.py", line 294, in _register_candidate_in_mlflow
+    signature = infer_signature(X_test, pipeline.predict(X_test))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/mlflow/models/signature.py", line 213, in infer_signature
+    inputs = _infer_schema(model_input) if model_input is not None else None
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/mlflow/types/utils.py", line 329, in _infer_schema
+    type=_infer_pandas_column(data[col]),
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/mlflow/types/utils.py", line 472, in _infer_pandas_column
+    arr_type = _infer_colspec_type(col.to_list())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/mlflow/types/utils.py", line 97, in _infer_colspec_type
+    dtype = _infer_datatype(data)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/mlflow/types/utils.py", line 120, in _infer_datatype
+    return _infer_array_datatype(data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/mlflow/types/utils.py", line 149, in _infer_array_datatype
+    dtype = _infer_datatype(item)
+            ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/mlflow/types/utils.py", line 122, in _infer_datatype
+    return _infer_scalar_datatype(data)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/mlflow/types/utils.py", line 187, in _infer_scalar_datatype
+    if DataType.is_double(data):
+       ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/mlflow/types/schema.py", line 99, in is_double
+    return type(value) in DataType.double.get_all_types()
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/airflow/.local/lib/python3.12/site-packages/mlflow/types/schema.py", line 115, in get_all_types
+    if importlib.util.find_spec("pyspark") is not None:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib.util>", line 101, in find_spec
+  File "<frozen importlib._bootstrap>", line 1262, in _find_spec
+  File "<frozen importlib._bootstrap_external>", line 1528, in find_spec
+  File "<frozen importlib._bootstrap_external>", line 1502, in _get_spec
+  File "<frozen importlib._bootstrap_external>", line 1601, in find_spec
+  File "<frozen importlib._bootstrap_external>", line 147, in _path_stat
+  File "/home/airflow/.local/lib/python3.12/site-packages/airflow/models/taskinstance.py", line 2613, in signal_handler
+    raise AirflowTaskTerminated("Task received SIGTERM signal")
+airflow.exceptions.AirflowTaskTerminated: Task received SIGTERM signal
+[2026-05-27T03:17:53.869+0000] {taskinstance.py:1206} INFO - Marking task as UP_FOR_RETRY. dag_id=real_estate_mlops_pipeline, task_id=register_candidate_in_mlflow, run_id=scheduled__2026-05-27T02:00:00+00:00, execution_date=20260527T020000, start_date=20260527T031112, end_date=20260527T031753
+[2026-05-27T03:17:53.972+0000] {process_utils.py:80} INFO - Process psutil.Process(pid=4844, status='terminated', exitcode=2, started='03:11:12') (4844) terminated with exit code 2
+[2026-05-27T03:17:53.973+0000] {local_task_job_runner.py:240} INFO - Task exited with return code 143
+[2026-05-27T03:17:54.001+0000] {taskinstance.py:3498} INFO - 0 downstream tasks scheduled from follow-on schedule check

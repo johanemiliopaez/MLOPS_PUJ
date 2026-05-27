@@ -1,0 +1,18 @@
+[2026-05-27T02:42:26.176+0000] {local_task_job_runner.py:120} INFO - ::group::Pre task execution logs
+[2026-05-27T02:42:26.215+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: real_estate_mlops_pipeline.fetch_batch_from_api manual__2026-05-27T02:31:03.363362+00:00 [queued]>
+[2026-05-27T02:42:26.226+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: real_estate_mlops_pipeline.fetch_batch_from_api manual__2026-05-27T02:31:03.363362+00:00 [queued]>
+[2026-05-27T02:42:26.227+0000] {taskinstance.py:2306} INFO - Starting attempt 5 of 5
+[2026-05-27T02:42:26.248+0000] {taskinstance.py:2330} INFO - Executing <Task(PythonOperator): fetch_batch_from_api> on 2026-05-27 02:31:03.363362+00:00
+[2026-05-27T02:42:26.268+0000] {logging_mixin.py:188} WARNING - /home/airflow/.local/lib/python3.12/site-packages/airflow/task/task_runner/standard_task_runner.py:61 DeprecationWarning: This process (pid=2611) is multi-threaded, use of fork() may lead to deadlocks in the child.
+[2026-05-27T02:42:26.269+0000] {standard_task_runner.py:63} INFO - Started process 2629 to run task
+[2026-05-27T02:42:26.268+0000] {standard_task_runner.py:90} INFO - Running: ['airflow', 'tasks', 'run', 'real_estate_mlops_pipeline', 'fetch_batch_from_api', 'manual__2026-05-27T02:31:03.363362+00:00', '--job-id', '21', '--raw', '--subdir', 'DAGS_FOLDER/mlops_pipeline.py', '--cfg-path', '/tmp/tmpfa8zi777']
+[2026-05-27T02:42:26.270+0000] {standard_task_runner.py:91} INFO - Job 21: Subtask fetch_batch_from_api
+[2026-05-27T02:42:26.388+0000] {task_command.py:426} INFO - Running <TaskInstance: real_estate_mlops_pipeline.fetch_batch_from_api manual__2026-05-27T02:31:03.363362+00:00 [running]> on host 86717520d88f
+[2026-05-27T02:42:26.616+0000] {taskinstance.py:2648} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops_team' AIRFLOW_CTX_DAG_ID='real_estate_mlops_pipeline' AIRFLOW_CTX_TASK_ID='fetch_batch_from_api' AIRFLOW_CTX_EXECUTION_DATE='2026-05-27T02:31:03.363362+00:00' AIRFLOW_CTX_TRY_NUMBER='5' AIRFLOW_CTX_DAG_RUN_ID='manual__2026-05-27T02:31:03.363362+00:00'
+[2026-05-27T02:42:26.617+0000] {taskinstance.py:430} INFO - ::endgroup::
+[2026-05-27T02:42:32.327+0000] {python.py:237} INFO - Done. Returned value was: None
+[2026-05-27T02:42:32.328+0000] {taskinstance.py:441} INFO - ::group::Post task execution logs
+[2026-05-27T02:42:32.340+0000] {taskinstance.py:1206} INFO - Marking task as SUCCESS. dag_id=real_estate_mlops_pipeline, task_id=fetch_batch_from_api, run_id=manual__2026-05-27T02:31:03.363362+00:00, execution_date=20260527T023103, start_date=20260527T024226, end_date=20260527T024232
+[2026-05-27T02:42:32.382+0000] {local_task_job_runner.py:240} INFO - Task exited with return code 0
+[2026-05-27T02:42:32.413+0000] {taskinstance.py:3498} INFO - 1 downstream tasks scheduled from follow-on schedule check
+[2026-05-27T02:42:32.417+0000] {local_task_job_runner.py:222} INFO - ::endgroup::

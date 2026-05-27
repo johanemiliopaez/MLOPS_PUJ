@@ -1,0 +1,1 @@
+[2026-05-27T02:37:40.947+0000] {task_context_logger.py:104} ERROR - Executor reports task instance <TaskInstance: real_estate_mlops_pipeline.fetch_batch_from_api manual__2026-05-27T02:31:03.363362+00:00 [queued]> finished (failed) although the task says it's queued. (Info: None) Was the task killed externally?
