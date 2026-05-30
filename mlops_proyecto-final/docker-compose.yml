@@ -3,8 +3,8 @@ version: '3.8'
 # Configuración común reutilizable para los servicios de Airflow
 x-airflow-common: &airflow-common
   build:
-    context: ./airflow_image
-    dockerfile: Dockerfile
+    context: .
+    dockerfile: ./airflow_image/Dockerfile
   environment:
     &airflow-common-env
     # Conexión a la base de datos PostgreSQL independiente para Airflow

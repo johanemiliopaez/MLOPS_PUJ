@@ -1,0 +1,19 @@
+[2026-05-30T01:11:09.776+0000] {local_task_job_runner.py:120} INFO - ::group::Pre task execution logs
+[2026-05-30T01:11:09.824+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: real_estate_mlops_pipeline.train_candidate_model scheduled__2026-05-30T00:00:00+00:00 [queued]>
+[2026-05-30T01:11:09.834+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: real_estate_mlops_pipeline.train_candidate_model scheduled__2026-05-30T00:00:00+00:00 [queued]>
+[2026-05-30T01:11:09.835+0000] {taskinstance.py:2306} INFO - Starting attempt 2 of 3
+[2026-05-30T01:11:09.849+0000] {taskinstance.py:2330} INFO - Executing <Task(PythonOperator): train_candidate_model> on 2026-05-30 00:00:00+00:00
+[2026-05-30T01:11:09.865+0000] {logging_mixin.py:188} WARNING - /home/airflow/.local/lib/python3.12/site-packages/airflow/task/task_runner/standard_task_runner.py:61 DeprecationWarning: This process (pid=175) is multi-threaded, use of fork() may lead to deadlocks in the child.
+[2026-05-30T01:11:09.866+0000] {standard_task_runner.py:63} INFO - Started process 231 to run task
+[2026-05-30T01:11:09.865+0000] {standard_task_runner.py:90} INFO - Running: ['airflow', 'tasks', 'run', 'real_estate_mlops_pipeline', 'train_candidate_model', 'scheduled__2026-05-30T00:00:00+00:00', '--job-id', '84', '--raw', '--subdir', 'DAGS_FOLDER/mlops_pipeline.py', '--cfg-path', '/tmp/tmpfc70azfi']
+[2026-05-30T01:11:09.867+0000] {standard_task_runner.py:91} INFO - Job 84: Subtask train_candidate_model
+[2026-05-30T01:11:09.926+0000] {task_command.py:426} INFO - Running <TaskInstance: real_estate_mlops_pipeline.train_candidate_model scheduled__2026-05-30T00:00:00+00:00 [running]> on host 123d1cd2e2a1
+[2026-05-30T01:11:10.027+0000] {taskinstance.py:2648} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops_team' AIRFLOW_CTX_DAG_ID='real_estate_mlops_pipeline' AIRFLOW_CTX_TASK_ID='train_candidate_model' AIRFLOW_CTX_EXECUTION_DATE='2026-05-30T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='2' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2026-05-30T00:00:00+00:00'
+[2026-05-30T01:11:10.029+0000] {taskinstance.py:430} INFO - ::endgroup::
+[2026-05-30T01:19:34.525+0000] {logging_mixin.py:188} INFO - Modelo candidato entrenado y subido a MinIO: s3://mlflow-artifacts/temp_models/candidate_scheduled__2026-05-30T00:00:00+00:00.pkl
+[2026-05-30T01:19:36.711+0000] {python.py:237} INFO - Done. Returned value was: None
+[2026-05-30T01:19:36.712+0000] {taskinstance.py:441} INFO - ::group::Post task execution logs
+[2026-05-30T01:19:36.724+0000] {taskinstance.py:1206} INFO - Marking task as SUCCESS. dag_id=real_estate_mlops_pipeline, task_id=train_candidate_model, run_id=scheduled__2026-05-30T00:00:00+00:00, execution_date=20260530T000000, start_date=20260530T011109, end_date=20260530T011936
+[2026-05-30T01:19:36.833+0000] {local_task_job_runner.py:240} INFO - Task exited with return code 0
+[2026-05-30T01:19:36.857+0000] {taskinstance.py:3498} INFO - 1 downstream tasks scheduled from follow-on schedule check
+[2026-05-30T01:19:36.861+0000] {local_task_job_runner.py:222} INFO - ::endgroup::

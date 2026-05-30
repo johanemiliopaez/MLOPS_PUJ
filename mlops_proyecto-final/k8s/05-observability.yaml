@@ -1,50 +1,65 @@
----
+# --- PROMETHEUS CONFIGURATION ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: prometheus-config
-  namespace: mlops-diabetes
 data:
   prometheus.yml: |
     global:
-      scrape_interval: 5s
+      scrape_interval: 15s
     scrape_configs:
       - job_name: 'fastapi'
         static_configs:
           - targets: ['fastapi:8000']
 ---
-# 🚀 NUEVO: Configuración de auto-conexión para Grafana
+# --- LOCUST CONFIGURATION (PYTHON SCRIPT INTEGRADO) ---
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: grafana-datasources-config
-  namespace: mlops-diabetes
+  name: locust-config
 data:
-  datasources.yaml: |
-    apiVersion: 1
-    datasources:
-      - name: Prometheus
-        type: prometheus
-        access: proxy
-        url: http://prometheus:9090
-        isDefault: true
-      - name: PostgreSQLMLOps
-        type: postgres
-        access: proxy
-        url: postgres:5432
-        user: mlops_user
-        secureJsonData:
-          password: mlops_password
-        jsonData:
-          database: mlops_db       # <-- ¡El cambio clave está aquí!
-          sslmode: 'disable'
-          postgresVersion: 1500
+  locustfile.py: |
+    from locust import HttpUser, task, between
+    import random
+
+    class DiabetesPredictorUser(HttpUser):
+        # Simula un tiempo de espera entre 1 y 2 segundos entre cada acción del usuario
+        wait_time = between(1, 2)
+
+        @task(5)
+        def predict_readmission(self):
+            # Payload estructurado igual que el modelo PatientData de la API
+            payload = {
+                "age": random.choice(["[40-50)", "[50-60)", "[60-70)", "[70-80)", "[80-90)"]),
+                "time_in_hospital": random.randint(1, 14),
+                "num_lab_procedures": random.randint(1, 100),
+                "num_procedures": random.randint(0, 6),
+                "num_medications": random.randint(1, 50),
+                "number_outpatient": random.randint(0, 5),
+                "number_emergency": random.randint(0, 5),
+                "number_inpatient": random.randint(0, 5),
+                "number_diagnoses": random.randint(1, 16),
+                "change": random.choice(["No", "Ch"]),
+                "diabetesMed": random.choice(["No", "Yes"])
+            }
+            
+            # Al usar el parámetro 'json', Locust añade automáticamente el header 
+            # 'Content-Type: application/json' y serializa el dict
+            with self.client.post("/predict", json=payload, catch_response=True) as response:
+                if response.status_code == 200:
+                    response.success()
+                else:
+                    response.failure(f"Falló la predicción: {response.text}")
+
+        @task(1)
+        def health_check(self):
+            self.client.get("/health")
 ---
+# --- PROMETHEUS DEPLOYMENT ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: prometheus
-  namespace: mlops-diabetes
 spec:
   replicas: 1
   selector:
@@ -61,18 +76,11 @@ spec:
         ports:
         - containerPort: 9090
         volumeMounts:
-        - name: config
+        - name: prom-config
           mountPath: /etc/prometheus/prometheus.yml
           subPath: prometheus.yml
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "200m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
       volumes:
-      - name: config
+      - name: prom-config
         configMap:
           name: prometheus-config
 ---
@@ -80,19 +88,17 @@ apiVersion: v1
 kind: Service
 metadata:
   name: prometheus
-  namespace: mlops-diabetes
 spec:
   selector:
     app: prometheus
   ports:
-    - protocol: TCP
-      port: 9090
+  - port: 9090
 ---
+# --- GRAFANA DEPLOYMENT ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: grafana
-  namespace: mlops-diabetes
 spec:
   replicas: 1
   selector:
@@ -111,31 +117,52 @@ spec:
         env:
         - name: GF_SECURITY_ADMIN_PASSWORD
           value: "admin"
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "100m"
-          limits:
-            memory: "512Mi"
-            cpu: "300m"
-        # 🚀 NUEVO: Inyectando el archivo de aprovisionamiento
-        volumeMounts:
-        - name: grafana-datasources
-          mountPath: /etc/grafana/provisioning/datasources
-      volumes:
-      - name: grafana-datasources
-        configMap:
-          name: grafana-datasources-config
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: grafana
-  namespace: mlops-diabetes
 spec:
   selector:
     app: grafana
   ports:
-    - protocol: TCP
-      port: 3000
-  type: LoadBalancer
+  - port: 3000
+---
+# --- LOCUST DEPLOYMENT ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: locust
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: locust
+  template:
+    metadata:
+      labels:
+        app: locust
+    spec:
+      containers:
+      - name: locust
+        image: locustio/locust
+        command: ["locust", "-f", "/mnt/locust/locustfile.py", "--host", "http://fastapi:8000"]
+        ports:
+        - containerPort: 8089
+        volumeMounts:
+        - name: locust-scripts
+          mountPath: /mnt/locust
+      volumes:
+      - name: locust-scripts
+        configMap:
+          name: locust-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: locust
+spec:
+  selector:
+    app: locust
+  ports:
+  - port: 8089

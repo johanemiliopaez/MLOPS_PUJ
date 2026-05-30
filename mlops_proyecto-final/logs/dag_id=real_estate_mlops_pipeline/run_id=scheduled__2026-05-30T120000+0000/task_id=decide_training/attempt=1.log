@@ -1,0 +1,21 @@
+[2026-05-30T13:34:41.010+0000] {local_task_job_runner.py:120} INFO - ::group::Pre task execution logs
+[2026-05-30T13:34:41.049+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: real_estate_mlops_pipeline.decide_training scheduled__2026-05-30T12:00:00+00:00 [queued]>
+[2026-05-30T13:34:41.064+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: real_estate_mlops_pipeline.decide_training scheduled__2026-05-30T12:00:00+00:00 [queued]>
+[2026-05-30T13:34:41.065+0000] {taskinstance.py:2306} INFO - Starting attempt 1 of 3
+[2026-05-30T13:34:41.081+0000] {taskinstance.py:2330} INFO - Executing <Task(BranchPythonOperator): decide_training> on 2026-05-30 12:00:00+00:00
+[2026-05-30T13:34:41.100+0000] {logging_mixin.py:188} WARNING - /home/airflow/.local/lib/python3.12/site-packages/airflow/task/task_runner/standard_task_runner.py:61 DeprecationWarning: This process (pid=2471) is multi-threaded, use of fork() may lead to deadlocks in the child.
+[2026-05-30T13:34:41.101+0000] {standard_task_runner.py:63} INFO - Started process 2508 to run task
+[2026-05-30T13:34:41.099+0000] {standard_task_runner.py:90} INFO - Running: ['airflow', 'tasks', 'run', 'real_estate_mlops_pipeline', 'decide_training', 'scheduled__2026-05-30T12:00:00+00:00', '--job-id', '110', '--raw', '--subdir', 'DAGS_FOLDER/mlops_pipeline.py', '--cfg-path', '/tmp/tmpsftnsflv']
+[2026-05-30T13:34:41.102+0000] {standard_task_runner.py:91} INFO - Job 110: Subtask decide_training
+[2026-05-30T13:34:41.181+0000] {task_command.py:426} INFO - Running <TaskInstance: real_estate_mlops_pipeline.decide_training scheduled__2026-05-30T12:00:00+00:00 [running]> on host 123d1cd2e2a1
+[2026-05-30T13:34:41.321+0000] {taskinstance.py:2648} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops_team' AIRFLOW_CTX_DAG_ID='real_estate_mlops_pipeline' AIRFLOW_CTX_TASK_ID='decide_training' AIRFLOW_CTX_EXECUTION_DATE='2026-05-30T12:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2026-05-30T12:00:00+00:00'
+[2026-05-30T13:34:41.322+0000] {taskinstance.py:430} INFO - ::endgroup::
+[2026-05-30T13:34:41.338+0000] {baseoperator.py:399} WARNING - BranchPythonOperator.execute cannot be called outside TaskInstance!
+[2026-05-30T13:34:41.396+0000] {python.py:237} INFO - Done. Returned value was: train_candidate_model
+[2026-05-30T13:34:41.397+0000] {branch.py:36} INFO - Branch into train_candidate_model
+[2026-05-30T13:34:41.397+0000] {skipmixin.py:178} INFO - Following branch train_candidate_model
+[2026-05-30T13:34:41.418+0000] {skipmixin.py:246} INFO - Skipping tasks [('skip_training', -1)]
+[2026-05-30T13:34:41.455+0000] {taskinstance.py:441} INFO - ::group::Post task execution logs
+[2026-05-30T13:34:41.489+0000] {taskinstance.py:1206} INFO - Marking task as SUCCESS. dag_id=real_estate_mlops_pipeline, task_id=decide_training, run_id=scheduled__2026-05-30T12:00:00+00:00, execution_date=20260530T120000, start_date=20260530T133441, end_date=20260530T133441
+[2026-05-30T13:34:41.558+0000] {local_task_job_runner.py:240} INFO - Task exited with return code 0
+[2026-05-30T13:34:41.572+0000] {local_task_job_runner.py:222} INFO - ::endgroup::

@@ -1,0 +1,22 @@
+[2026-05-30T01:33:30.765+0000] {local_task_job_runner.py:120} INFO - ::group::Pre task execution logs
+[2026-05-30T01:33:30.789+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: real_estate_mlops_pipeline.decide_promotion scheduled__2026-05-30T00:00:00+00:00 [queued]>
+[2026-05-30T01:33:30.796+0000] {taskinstance.py:2076} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: real_estate_mlops_pipeline.decide_promotion scheduled__2026-05-30T00:00:00+00:00 [queued]>
+[2026-05-30T01:33:30.796+0000] {taskinstance.py:2306} INFO - Starting attempt 1 of 3
+[2026-05-30T01:33:30.815+0000] {taskinstance.py:2330} INFO - Executing <Task(BranchPythonOperator): decide_promotion> on 2026-05-30 00:00:00+00:00
+[2026-05-30T01:33:30.832+0000] {logging_mixin.py:188} WARNING - /home/airflow/.local/lib/python3.12/site-packages/airflow/task/task_runner/standard_task_runner.py:61 DeprecationWarning: This process (pid=1330) is multi-threaded, use of fork() may lead to deadlocks in the child.
+[2026-05-30T01:33:30.834+0000] {standard_task_runner.py:63} INFO - Started process 1350 to run task
+[2026-05-30T01:33:30.833+0000] {standard_task_runner.py:90} INFO - Running: ['airflow', 'tasks', 'run', 'real_estate_mlops_pipeline', 'decide_promotion', 'scheduled__2026-05-30T00:00:00+00:00', '--job-id', '92', '--raw', '--subdir', 'DAGS_FOLDER/mlops_pipeline.py', '--cfg-path', '/tmp/tmp3n36t1vo']
+[2026-05-30T01:33:30.834+0000] {standard_task_runner.py:91} INFO - Job 92: Subtask decide_promotion
+[2026-05-30T01:33:30.903+0000] {task_command.py:426} INFO - Running <TaskInstance: real_estate_mlops_pipeline.decide_promotion scheduled__2026-05-30T00:00:00+00:00 [running]> on host 123d1cd2e2a1
+[2026-05-30T01:33:30.994+0000] {taskinstance.py:2648} INFO - Exporting env vars: AIRFLOW_CTX_DAG_OWNER='mlops_team' AIRFLOW_CTX_DAG_ID='real_estate_mlops_pipeline' AIRFLOW_CTX_TASK_ID='decide_promotion' AIRFLOW_CTX_EXECUTION_DATE='2026-05-30T00:00:00+00:00' AIRFLOW_CTX_TRY_NUMBER='1' AIRFLOW_CTX_DAG_RUN_ID='scheduled__2026-05-30T00:00:00+00:00'
+[2026-05-30T01:33:30.995+0000] {taskinstance.py:430} INFO - ::endgroup::
+[2026-05-30T01:33:31.006+0000] {baseoperator.py:399} WARNING - BranchPythonOperator.execute cannot be called outside TaskInstance!
+[2026-05-30T01:33:31.020+0000] {python.py:237} INFO - Done. Returned value was: reject_model
+[2026-05-30T01:33:31.021+0000] {branch.py:36} INFO - Branch into reject_model
+[2026-05-30T01:33:31.021+0000] {skipmixin.py:178} INFO - Following branch reject_model
+[2026-05-30T01:33:31.040+0000] {skipmixin.py:246} INFO - Skipping tasks [('promote_model', -1)]
+[2026-05-30T01:33:31.078+0000] {taskinstance.py:441} INFO - ::group::Post task execution logs
+[2026-05-30T01:33:31.102+0000] {taskinstance.py:1206} INFO - Marking task as SUCCESS. dag_id=real_estate_mlops_pipeline, task_id=decide_promotion, run_id=scheduled__2026-05-30T00:00:00+00:00, execution_date=20260530T000000, start_date=20260530T013330, end_date=20260530T013331
+[2026-05-30T01:33:31.137+0000] {local_task_job_runner.py:240} INFO - Task exited with return code 0
+[2026-05-30T01:33:31.173+0000] {taskinstance.py:3498} INFO - 1 downstream tasks scheduled from follow-on schedule check
+[2026-05-30T01:33:31.178+0000] {local_task_job_runner.py:222} INFO - ::endgroup::

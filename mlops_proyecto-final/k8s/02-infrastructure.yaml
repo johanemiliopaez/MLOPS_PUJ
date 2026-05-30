@@ -1,0 +1,47 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: postgres } }
+  template:
+    metadata: { labels: { app: postgres } }
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:13
+        envFrom: [{ secretRef: { name: mlops-secrets } }]
+        volumeMounts: [{ mountPath: /docker-entrypoint-initdb.d, name: init-sql }]
+      volumes:
+      - name: init-sql
+        configMap: { name: postgres-init }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: postgres }
+spec:
+  selector: { app: postgres }
+  ports: [{ port: 5432 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: minio }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: minio } }
+  template:
+    metadata: { labels: { app: minio } }
+    spec:
+      containers:
+      - name: minio
+        image: minio/minio
+        command: ["server", "/data"]
+        envFrom: [{ secretRef: { name: mlops-secrets } }]
+---
+apiVersion: v1
+kind: Service
+metadata: { name: minio }
+spec:
+  selector: { app: minio }
+  ports: [{ port: 9000 }]

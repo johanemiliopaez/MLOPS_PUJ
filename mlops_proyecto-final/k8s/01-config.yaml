@@ -1,0 +1,38 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mlops-config
+data:
+  # Comunicación mediante DNS interno de Kubernetes
+  MLFLOW_TRACKING_URI: "http://mlflow:5000"
+  MLFLOW_S3_ENDPOINT_URL: "http://minio:9000"
+  DATA_API_URL: "http://data-api:80/data"
+  API_URL: "http://fastapi:8000"
+  AWS_DEFAULT_REGION: "us-east-1"
+  AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+  AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: postgres-init
+data:
+  init.sql: |
+    CREATE DATABASE airflow_db;
+    GRANT ALL PRIVILEGES ON DATABASE airflow_db TO mlops_user;
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mlops-secrets
+type: Opaque
+stringData:
+  POSTGRES_USER: "mlops_user"
+  POSTGRES_PASSWORD: "mlops_password"
+  MINIO_ROOT_USER: "minio_admin"
+  MINIO_ROOT_PASSWORD: "minio_password"
+  AWS_ACCESS_KEY_ID: "minio_admin"
+  AWS_SECRET_ACCESS_KEY: "minio_password"
+  DB_URI: "postgresql+psycopg2://mlops_user:mlops_password@postgres:5432/mlops_db"
+  MLFLOW_DB_URI: "postgresql://mlops_user:mlops_password@postgres:5432/mlops_db"
+  AIRFLOW_DB_URI: "postgresql+psycopg2://mlops_user:mlops_password@postgres:5432/airflow_db"
