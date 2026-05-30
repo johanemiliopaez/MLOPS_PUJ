@@ -1,84 +1,54 @@
 apiVersion: apps/v1
 kind: Deployment
-metadata:
-  name: fastapi
+metadata: { name: fastapi }
 spec:
   replicas: 1
-  selector:
-    matchLabels:
-      app: fastapi
+  selector: { matchLabels: { app: fastapi } }
   template:
-    metadata:
-      labels:
-        app: fastapi
+    metadata: { labels: { app: fastapi } }
     spec:
       containers:
       - name: fastapi
         image: puenayan1/mlops-realestate-api:v1
-        ports:
-        - containerPort: 8000
+        ports: [{ containerPort: 8000 }]
         resources:
-          requests:
-            cpu: "200m"
-            memory: "256Mi"
-          limits:
-            cpu: "500m"
-            memory: "512Mi"
+          requests: { cpu: "200m", memory: "256Mi" }
+          limits: { cpu: "500m", memory: "512Mi" }
         envFrom:
-        - configMapRef:
-            name: mlops-config
-        - secretRef:
-            name: mlops-secrets
+        - configMapRef: { name: mlops-config }
+        - secretRef: { name: mlops-secrets }
 ---
 apiVersion: v1
 kind: Service
-metadata:
-  name: fastapi
+metadata: { name: fastapi }
 spec:
-  selector:
-    app: fastapi
-  ports:
-  - port: 8000
+  selector: { app: fastapi }
+  ports: [{ port: 8000 }]
 ---
 apiVersion: apps/v1
 kind: Deployment
-metadata:
-  name: streamlit
+metadata: { name: streamlit }
 spec:
   replicas: 1
-  selector:
-    matchLabels:
-      app: streamlit
+  selector: { matchLabels: { app: streamlit } }
   template:
-    metadata:
-      labels:
-        app: streamlit
+    metadata: { labels: { app: streamlit } }
     spec:
       containers:
       - name: streamlit
         image: puenayan1/mlops-realestate-ui:v1
-        ports:
-        - containerPort: 8501
+        ports: [{ containerPort: 8501 }]
         resources:
-          requests:
-            cpu: "100m"
-            memory: "256Mi"
-          limits:
-            cpu: "300m"
-            memory: "512Mi"
+          requests: { cpu: "100m", memory: "256Mi" }
+          limits: { cpu: "300m", memory: "512Mi" }
         envFrom:
-        - configMapRef:
-            name: mlops-config
-        - secretRef:
-            name: mlops-secrets
+        - configMapRef: { name: mlops-config }
+        - secretRef: { name: mlops-secrets }
 ---
 apiVersion: v1
 kind: Service
-metadata:
-  name: streamlit
+metadata: { name: streamlit }
 spec:
   type: LoadBalancer
-  selector:
-    app: streamlit
-  ports:
-  - port: 8501
+  selector: { app: streamlit }
+  ports: [{ port: 8501 }]

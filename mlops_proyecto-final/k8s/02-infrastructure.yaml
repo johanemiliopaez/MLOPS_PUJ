@@ -1,3 +1,19 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+spec:
+  accessModes: [ "ReadWriteOnce" ]
+  resources: { requests: { storage: 5Gi } }
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-pvc
+spec:
+  accessModes: [ "ReadWriteOnce" ]
+  resources: { requests: { storage: 5Gi } }
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -10,11 +26,28 @@ spec:
     spec:
       containers:
       - name: postgres
-        image: postgres:13
-        envFrom: [{ secretRef: { name: mlops-secrets } }]
-        volumeMounts: [{ mountPath: /docker-entrypoint-initdb.d, name: init-sql }]
+        image: postgres:15
+        ports: [{ containerPort: 5432 }]
+        resources:
+          requests: { cpu: "250m", memory: "512Mi" }
+          limits: { cpu: "500m", memory: "1Gi" }
+        env:
+        - name: POSTGRES_USER
+          valueFrom: { secretKeyRef: { name: mlops-secrets, key: POSTGRES_USER } }
+        - name: POSTGRES_PASSWORD
+          valueFrom: { secretKeyRef: { name: mlops-secrets, key: POSTGRES_PASSWORD } }
+        - name: POSTGRES_DB
+          value: "mlops_db"
+        volumeMounts:
+        - mountPath: /var/lib/postgresql/data
+          name: pg-data
+        - mountPath: /docker-entrypoint-initdb.d/init.sql
+          name: pg-init
+          subPath: init.sql
       volumes:
-      - name: init-sql
+      - name: pg-data
+        persistentVolumeClaim: { claimName: postgres-pvc }
+      - name: pg-init
         configMap: { name: postgres-init }
 ---
 apiVersion: v1
@@ -26,7 +59,8 @@ spec:
 ---
 apiVersion: apps/v1
 kind: Deployment
-metadata: { name: minio }
+metadata:
+  name: minio
 spec:
   replicas: 1
   selector: { matchLabels: { app: minio } }
@@ -36,12 +70,35 @@ spec:
       containers:
       - name: minio
         image: minio/minio
-        command: ["server", "/data"]
-        envFrom: [{ secretRef: { name: mlops-secrets } }]
+        command:
+        - /bin/sh
+        - -c
+        - "minio server /data --console-address :9001"
+        ports:
+        - containerPort: 9000
+        - containerPort: 9001
+        resources:
+          requests: { cpu: "200m", memory: "256Mi" }
+          limits: { cpu: "500m", memory: "512Mi" }
+        env:
+        - name: MINIO_ROOT_USER
+          valueFrom: { secretKeyRef: { name: mlops-secrets, key: MINIO_ROOT_USER } }
+        - name: MINIO_ROOT_PASSWORD
+          valueFrom: { secretKeyRef: { name: mlops-secrets, key: MINIO_ROOT_PASSWORD } }
+        volumeMounts:
+        - mountPath: /data
+          name: minio-data
+      volumes:
+      - name: minio-data
+        persistentVolumeClaim: { claimName: minio-pvc }
 ---
 apiVersion: v1
 kind: Service
 metadata: { name: minio }
 spec:
   selector: { app: minio }
-  ports: [{ port: 9000 }]
+  ports:
+  - name: api
+    port: 9000
+  - name: console
+    port: 9001

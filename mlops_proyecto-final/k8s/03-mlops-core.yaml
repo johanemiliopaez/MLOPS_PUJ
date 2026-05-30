@@ -2,8 +2,77 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata: { name: airflow-logs-pvc }
 spec:
-  accessModes: ["ReadWriteOnce"]
+  accessModes: [ "ReadWriteOnce" ]
   resources: { requests: { storage: 2Gi } }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: data-api }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: data-api } }
+  template:
+    metadata: { labels: { app: data-api } }
+    spec:
+      containers:
+      - name: data-api
+        image: cristiandiaz13/mlops-puj:data-api-pf-v1
+        ports: [{ containerPort: 80 }]
+        resources:
+          requests: { cpu: "250m", memory: "512Mi" }
+          limits: { cpu: "500m", memory: "1Gi" }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: data-api }
+spec:
+  selector: { app: data-api }
+  ports: [{ port: 80 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: mlflow }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: mlflow } }
+  template:
+    metadata: { labels: { app: mlflow } }
+    spec:
+      initContainers:
+      - name: create-minio-bucket
+        image: minio/mc
+        envFrom: [{ secretRef: { name: mlops-secrets } }]
+        command:
+        - /bin/sh
+        - -c
+        - |
+          until mc alias set myminio http://minio:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD; do
+            echo 'Esperando a que MinIO encienda...';
+            sleep 3;
+          done;
+          mc mb myminio/mlflow-artifacts --ignore-existing;
+          mc anonymous set public myminio/mlflow-artifacts;
+      containers:
+      - name: mlflow
+        image: puenayan1/mlops-realestate-mlflow:v1
+        command:
+        - bash
+        - -c
+        - "unset MLFLOW_PORT && mlflow server --backend-store-uri $MLFLOW_DB_URI --default-artifact-root s3://mlflow-artifacts --host 0.0.0.0 --port 5000"
+        ports: [{ containerPort: 5000 }]
+        resources:
+          requests: { cpu: "250m", memory: "512Mi" }
+          limits: { cpu: "500m", memory: "1.5Gi" }
+        envFrom:
+        - configMapRef: { name: mlops-config }
+        - secretRef: { name: mlops-secrets }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: mlflow }
+spec:
+  selector: { app: mlflow }
+  ports: [{ port: 5000 }]
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -23,8 +92,15 @@ spec:
       - name: scheduler
         image: puenayan1/mlops-realestate-airflow:v1
         command: ["airflow", "scheduler"]
-        envFrom: [{ configMapRef: { name: mlops-config } }, { secretRef: { name: mlops-secrets } }]
-        env: [{ name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN, valueFrom: { secretKeyRef: { name: mlops-secrets, key: AIRFLOW_DB_URI } } }]
+        resources:
+          requests: { cpu: "250m", memory: "512Mi" }
+          limits: { cpu: "1000m", memory: "1.5Gi" }
+        envFrom:
+        - configMapRef: { name: mlops-config }
+        - secretRef: { name: mlops-secrets }
+        env:
+        - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+          valueFrom: { secretKeyRef: { name: mlops-secrets, key: AIRFLOW_DB_URI } }
         volumeMounts: [{ mountPath: /opt/airflow/logs, name: airflow-logs }]
       volumes:
       - name: airflow-logs
@@ -47,20 +123,35 @@ spec:
       - name: airflow-db-init
         image: puenayan1/mlops-realestate-airflow:v1
         command: ["airflow", "db", "upgrade"]
-        envFrom: [{ configMapRef: { name: mlops-config } }, { secretRef: { name: mlops-secrets } }]
-        env: [{ name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN, valueFrom: { secretKeyRef: { name: mlops-secrets, key: AIRFLOW_DB_URI } } }]
+        envFrom:
+        - configMapRef: { name: mlops-config }
+        - secretRef: { name: mlops-secrets }
+        env:
+        - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+          valueFrom: { secretKeyRef: { name: mlops-secrets, key: AIRFLOW_DB_URI } }
       - name: airflow-user-create
         image: puenayan1/mlops-realestate-airflow:v1
         command: ["bash", "-c", "airflow users create -r Admin -u admin -p admin -e admin@example.com -f admin -l admin || true"]
-        envFrom: [{ configMapRef: { name: mlops-config } }, { secretRef: { name: mlops-secrets } }]
-        env: [{ name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN, valueFrom: { secretKeyRef: { name: mlops-secrets, key: AIRFLOW_DB_URI } } }]
+        envFrom:
+        - configMapRef: { name: mlops-config }
+        - secretRef: { name: mlops-secrets }
+        env:
+        - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+          valueFrom: { secretKeyRef: { name: mlops-secrets, key: AIRFLOW_DB_URI } }
       containers:
       - name: webserver
         image: puenayan1/mlops-realestate-airflow:v1
         command: ["airflow", "webserver"]
         ports: [{ containerPort: 8080 }]
-        envFrom: [{ configMapRef: { name: mlops-config } }, { secretRef: { name: mlops-secrets } }]
-        env: [{ name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN, valueFrom: { secretKeyRef: { name: mlops-secrets, key: AIRFLOW_DB_URI } } }]
+        resources:
+          requests: { cpu: "250m", memory: "512Mi" }
+          limits: { cpu: "500m", memory: "1.5Gi" }
+        envFrom:
+        - configMapRef: { name: mlops-config }
+        - secretRef: { name: mlops-secrets }
+        env:
+        - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
+          valueFrom: { secretKeyRef: { name: mlops-secrets, key: AIRFLOW_DB_URI } }
         volumeMounts: [{ mountPath: /opt/airflow/logs, name: airflow-logs }]
       volumes:
       - name: airflow-logs
