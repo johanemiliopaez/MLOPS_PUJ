@@ -1,85 +1,118 @@
-# Proyecto 2: Arquitectura Integral de MLOps en Kubernetes
-**Institución:** Pontificia Universidad Javeriana
-**Fecha:** Mayo de 2026
+# 🚀 MLOps Real Estate Pricing Pipeline en Kubernetes
 
-## 1. Descripción del Proyecto
-Este proyecto tiene como objetivo diseñar, implementar y desplegar una arquitectura integral de MLOps sobre Kubernetes. El sistema cubre el ciclo completo de vida de un modelo de Machine Learning: ingesta de datos por lotes, almacenamiento de información cruda, procesamiento y limpieza, entrenamiento periódico, registro de experimentos, versionamiento de modelos, selección automática del mejor modelo, despliegue de inferencia mediante una API, consumo desde una interfaz gráfica, pruebas de carga y observabilidad del servicio. El caso de uso se basa en un conjunto de datos clínicos de pacientes con diabetes para la predicción de readmisión hospitalaria.
+[![Kubernetes](https://img.shields.io/badge/kubernetes-%23326ce5.svg?style=for-the-badge&logo=kubernetes&logoColor=white)](#)
+[![Apache Airflow](https://img.shields.io/badge/Apache%20Airflow-017CEE?style=for-the-badge&logo=Apache%20Airflow&logoColor=white)](#)
+[![MLflow](https://img.shields.io/badge/mlflow-%23d9ead3.svg?style=for-the-badge&logo=numpy&logoColor=blue)](#)
+[![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](#)
 
-## 2. Arquitectura del Sistema
-La arquitectura está desplegada completamente en un clúster local de Kubernetes bajo el namespace `mlops-diabetes`:
+Este repositorio contiene la infraestructura como código (IaC) y la configuración declarativa para un ecosistema **MLOps completo (End-to-End)** desplegado sobre un clúster local de Kubernetes. 
 
-### Fase de Entrenamiento
-* **Airflow:** Orquestador encargado del flujo de ingesta, procesamiento, entrenamiento y registro del modelo. Gestiona la carga incremental en lotes de hasta 15,000 registros.
-* **PostgreSQL:** Almacenamiento relacional para datos crudos (RAW), procesados (CLEAN) y logs de inferencia.
-* **MinIO:** Sistema de almacenamiento de objetos (S3 compatible) para los artefactos de MLflow.
-* **MLflow:** Servidor para el seguimiento de experimentos y registro de modelos, configurado con backend de PostgreSQL y artifact store de MinIO.
+El proyecto automatiza la extracción de datos, limpieza, entrenamiento, evaluación, registro, despliegue y monitoreo de un modelo de Machine Learning (`RealEstate_Pricing_Model`), asegurando un entorno inmutable y determinista.
 
-### Fase de Inferencia y Observabilidad
-* **FastAPI:** API de inferencia que carga dinámicamente el modelo productivo desde MLflow. Registra cada solicitud en la base de datos.
-* **Streamlit:** Interfaz gráfica simple para enviar datos a la API y visualizar predicciones.
-* **Locust:** Herramienta para ejecutar pruebas de carga sobre la API de inferencia.
-* **Prometheus & Grafana:** Stack de observabilidad para monitorear métricas de hardware y de la aplicación en tiempo real.
+---
 
-## 3. Credenciales de Acceso
-A continuación, se detallan los usuarios y contraseñas configurados para los distintos servicios del clúster:
+## 🏗️ Arquitectura del Sistema
 
-| Servicio | Usuario | Contraseña |
-| :--- | :--- | :--- |
-| **Airflow (Web UI)** | `admin` | `admin` |
-| **Grafana (Web UI)** | `admin` | `admin` |
-| **PostgreSQL / MLflow DB** | `mlops_user` | `mlops_password` |
-| **MinIO (Consola/S3)** | `minio_admin` | `minio_password` |
+El ecosistema está compuesto por 8 microservicios interconectados mediante el DNS interno de Kubernetes:
 
-## 4. Instrucciones de Despliegue
-Para desplegar la infraestructura de forma automatizada, ejecute los siguientes comandos en orden:
+* **Orquestación:** Apache Airflow (Scheduler & Webserver) ejecutando el DAG `real_estate_mlops_pipeline`.
+* **Almacenamiento de Metadatos y Aplicación:** PostgreSQL (Bases de datos `airflow_db` y `mlops_db`).
+* **Almacenamiento de Artefactos (S3):** MinIO.
+* **Model Registry & Tracking:** MLflow.
+* **Inferencia (Serving):** FastAPI.
+* **Ingesta de Datos:** Data API académica.
+* **Interfaz Gráfica (Frontend):** Streamlit.
+* **Observabilidad y Pruebas:** Prometheus, Grafana y Locust.
 
-1.  **Preparar el Namespace:**
-    ```bash
-    kubectl create namespace mlops-diabetes
-    ```
-2.  **Configurar Secretos y ConfigMaps:**
-    ```bash
-    kubectl apply -f 01-setup.yaml
-    ```
-3.  **Desplegar Almacenamiento:**
-    ```bash
-    kubectl apply -f 02-storage.yaml
-    ```
-4.  **Desplegar Aplicaciones y Observabilidad:**
-    ```bash
-    kubectl apply -f 03-mlflow.yaml -f 04-apps.yaml -f 05-observability.yaml -f 06-airflow.yaml
-    ```
+---
 
-## 5. Guía de Validación (End-to-End)
-Dado que el ecosistema nace 100% interconectado, proceda directamente con la validación del flujo de datos:
+## 🛠️ Requisitos Previos
 
-1.  **Entrenamiento:** Acceda a Airflow (`http://localhost:8080`) y active el DAG para ejecutar el pipeline. Verifique el registro en MLflow (`http://localhost:5000`).
-2.  **Inferencia:** Realice una predicción clínica de prueba en la interfaz de Streamlit (`http://localhost:8501`).
-3.  **Carga:** Inicie una prueba de estrés en Locust (`http://localhost:8089`) simulando 50 usuarios recurrentes hacia `http://fastapi:8000`.
-4.  **Monitoreo:** Acceda a Grafana (`http://localhost:3000`), importe su archivo JSON del Dashboard de MLOps y verifique en tiempo real cómo las gráficas responden al tráfico de Locust.
+* **Entorno:** Ubuntu / Linux (o WSL2 en Windows).
+* **Motor de Contenedores:** Docker Desktop o el demonio nativo de Docker limpio (sin contenedores "zombies" ocupando puertos).
+* **Kubernetes:** Minikube o el clúster integrado de Docker Desktop activo.
+* **Herramientas CLI:** `kubectl` instalado y configurado.
 
-## 6. Limpieza y Apagado (Opcional)
-Si desea eliminar los recursos o apagar el entorno de pruebas, puede utilizar los siguientes comandos:
+---
 
-* **Eliminar el proyecto completo:**
-    ```bash
-    kubectl delete namespace mlops-diabetes
-    ```
-    *Este comando aniquilará todos los pods, servicios, secretos y volúmenes de almacenamiento persistente asociados al proyecto.*
+## 🚀 Guía de Despliegue (Zero-Touch Deployment)
 
-* **Apagar el clúster (si utiliza Minikube):**
-    ```bash
-    minikube stop
-    ```
+La infraestructura está diseñada para levantarse desde cero (`from scratch`) y auto-configurarse, incluyendo la creación dinámica de tablas SQL (`raw_data`, `clean_data`, `pipeline_history`) mediante scripts de inicialización.
 
-## 7. Dificultades y Soluciones Encontradas
-* **Gestión de Credenciales en Airflow:** Se detectó que el arranque estándar generaba contraseñas aleatorias que impedían el acceso estable. **Solución:** Se implementó un comando de inicio blindado en el deployment que fuerza el reseteo de la contraseña a `admin` en cada arranque del Pod.
-* **Esquema de Datos de Inferencia:** La API fallaba al insertar logs debido a la falta de columnas dinámicas requeridas por el modelo. **Solución:** Se automatizó la creación del esquema exacto mediante un script `init.sql` montado en la inicialización de PostgreSQL.
-* **Bug de Aprovisionamiento en Grafana:** El motor de configuración ignoraba la base de datos por defecto si se inyectaba en la raíz del YAML. **Solución:** Se identificó que el atributo `database` debía ser inyectado estrictamente dentro del bloque `jsonData` del `ConfigMap`, garantizando una conexión 100% automatizada sin intervención manual.
+### 1. Limpieza del Entorno (Opcional pero recomendado)
+Si tienes despliegues anteriores, asegúrate de limpiar los puertos y liberar los volúmenes persistentes para un inicio inmaculado:
+```bash
+sudo killall kubectl
+docker stop $(docker ps -q)
+kubectl delete -f k8s/
+kubectl delete pvc --all
+```
 
-## 8. Cumplimiento de la Rúbrica
-* **Kubernetes (20%):** Despliegue completo con Deployments, Services, PVC y límites de recursos definidos.
-* **Orquestación Airflow (20%):** DAG de ejecución con carga por lotes y entrenamiento reproducible.
-* **MLflow (20%):** Arquitectura de tracking externa utilizando PostgreSQL como Backend y MinIO como Artifact Store.
-* **API e Interfaz (15%):** Despliegue de FastAPI consumiendo modelos dinámicamente y registro transaccional de inferencias en DB.
-* **Observabilidad y Carga (15%):** Integración nativa de Locust, recolección de métricas con Prometheus y Dashboard de Grafana provisionado como código.
+### 2. Despliegue Secuencial
+Ejecuta los manifiestos en el siguiente orden. Es **crítico** respetar la pausa de 15 segundos para que PostgreSQL ejecute el `init.sql` antes de que Airflow intente conectarse.
+
+```bash
+# 1. Configuración, Secretos y Script de BD
+kubectl apply -f k8s/01-config.yaml
+
+# 2. Bases de Datos y Almacenamiento (Postgres & MinIO)
+kubectl apply -f k8s/02-infrastructure.yaml
+
+# 3. Dar tiempo al provisionamiento del esquema SQL
+sleep 15
+
+# 4. Orquestación, APIs y Observabilidad
+kubectl apply -f k8s/03-mlops-core.yaml
+kubectl apply -f k8s/04-serving.yaml
+kubectl apply -f k8s/05-observability.yaml
+```
+
+Verifica que todos los Pods estén en estado `1/1 Running`:
+```bash
+kubectl get pods -w
+```
+
+---
+
+## 🌐 Acceso a los Servicios (Port-Forwarding)
+
+Una vez que todos los Pods estén operativos, ejecuta este bloque en tu terminal para abrir los túneles de comunicación hacia tu máquina local:
+
+```bash
+kubectl port-forward svc/airflow-webserver 8080:8080 --address 0.0.0.0 &
+kubectl port-forward svc/mlflow 5000:5000 --address 0.0.0.0 &
+kubectl port-forward svc/streamlit 8501:8501 --address 0.0.0.0 &
+kubectl port-forward svc/fastapi 8000:8000 --address 0.0.0.0 &
+kubectl port-forward svc/data-api 8001:80 --address 0.0.0.0 &
+kubectl port-forward svc/grafana 3000:3000 --address 0.0.0.0 &
+kubectl port-forward svc/locust 8089:8089 --address 0.0.0.0 &
+kubectl port-forward svc/minio 9001:9001 --address 0.0.0.0 &
+```
+
+### URLs y Credenciales
+*Usa `127.0.0.1` en lugar de `localhost` para evitar problemas de resolución IPv6 en navegadores modernos.*
+
+| Servicio | URL Local | Usuario | Contraseña |
+| :--- | :--- | :--- | :--- |
+| **Apache Airflow** | http://127.0.0.1:8080 | `admin` | `admin` |
+| **MLflow** | http://127.0.0.1:5000 | - | - |
+| **MinIO Console** | http://127.0.0.1:9001 | `minio_admin` | `minio_password` |
+| **FastAPI Swagger**| http://127.0.0.1:8000/docs | - | - |
+| **Data API Docs** | http://127.0.0.1:8001/docs | - | - |
+| **Streamlit UI** | http://127.0.0.1:8501 | - | - |
+| **Grafana** | http://127.0.0.1:3000 | `admin` | `admin` |
+| **Locust** | http://127.0.0.1:8089 | - | - |
+
+---
+
+## 📊 Monitoreo y Pruebas de Carga
+
+Para validar la resiliencia de la API de inferencia:
+1. Accede a **Locust** e inicia un enjambre (ej. 50 usuarios).
+2. Ingresa a **Grafana** y configura `http://prometheus:9090` como tu Data Source de Prometheus.
+3. Importa o crea paneles con las siguientes consultas (PromQL):
+   * **Tráfico (RPS):** `sum(rate(http_requests_total[1m]))`
+   * **Latencia Promedio:** `sum(rate(http_request_duration_seconds_sum[1m])) / sum(rate(http_request_duration_seconds_count[1m]))`
+
+---
+*Desarrollado por Jesus Alberto Puenayan Quiceno como parte de investigación y arquitectura de soluciones TI.*

@@ -3,6 +3,7 @@ kind: ConfigMap
 metadata:
   name: mlops-config
 data:
+  # Comunicación mediante DNS interno de Kubernetes
   MLFLOW_TRACKING_URI: "http://mlflow:5000"
   MLFLOW_S3_ENDPOINT_URL: "http://minio:9000"
   DATA_API_URL: "http://data-api:80/data"
@@ -17,8 +18,45 @@ metadata:
   name: postgres-init
 data:
   init.sql: |
+    -- 1. Crear base de datos para Airflow y dar permisos
     CREATE DATABASE airflow_db;
     GRANT ALL PRIVILEGES ON DATABASE airflow_db TO mlops_user;
+    
+    -- 2. Conectarse a la base de datos de MLOps (mlops_db se crea por la variable POSTGRES_DB)
+    \c mlops_db;
+    
+    -- 3. Crear las tablas de la aplicación requeridas por el DAG mlops_pipeline.py
+    
+    CREATE TABLE IF NOT EXISTS raw_data (
+        id SERIAL PRIMARY KEY,
+        batch_id VARCHAR(255) NOT NULL,
+        data JSONB, -- Opcional, dependiendo de si insertas el lote entero
+        record_data JSONB NOT NULL, -- Columna principal usada en _store_raw_batch
+        status VARCHAR(50),
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS clean_data (
+        id SERIAL PRIMARY KEY,
+        raw_id INTEGER REFERENCES raw_data(id),
+        features JSONB NOT NULL,
+        price FLOAT, -- Añadido para _train_candidate_model
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    CREATE TABLE IF NOT EXISTS pipeline_history (
+        id SERIAL PRIMARY KEY,
+        batch_id VARCHAR(100),
+        execution_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        status VARCHAR(50),
+        reason TEXT,
+        candidate_mae FLOAT,
+        champion_mae FLOAT
+    );
+    
+    -- 4. Dar permisos sobre estas tablas y secuencias al usuario mlops_user
+    GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO mlops_user;
+    GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO mlops_user;
 ---
 apiVersion: v1
 kind: Secret
