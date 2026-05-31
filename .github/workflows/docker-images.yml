@@ -4,11 +4,11 @@ on:
   push:
     branches: [main]
     paths:
-      - "airflow_image/**"
-      - "mlflow_image/**"
-      - "api/**"
-      - "ui/**"
-      - "dags/**"
+      - "mlops_proyecto-final/airflow_image/**"
+      - "mlops_proyecto-final/mlflow_image/**"
+      - "mlops_proyecto-final/api/**"
+      - "mlops_proyecto-final/ui/**"
+      - "mlops_proyecto-final/dags/**"
       - ".github/workflows/docker-images.yml"
   workflow_dispatch:
 
@@ -22,20 +22,20 @@ jobs:
       matrix:
         include:
           - name: airflow
-            context: .
-            dockerfile: airflow_image/Dockerfile
+            context: mlops_proyecto-final
+            dockerfile: mlops_proyecto-final/airflow_image/Dockerfile
             image: mlops-realestate-airflow
           - name: mlflow
-            context: mlflow_image
-            dockerfile: mlflow_image/Dockerfile
+            context: mlops_proyecto-final/mlflow_image
+            dockerfile: mlops_proyecto-final/mlflow_image/Dockerfile
             image: mlops-realestate-mlflow
           - name: api
-            context: api
-            dockerfile: api/Dockerfile
+            context: mlops_proyecto-final/api
+            dockerfile: mlops_proyecto-final/api/Dockerfile
             image: mlops-realestate-api
           - name: ui
-            context: ui
-            dockerfile: ui/Dockerfile
+            context: mlops_proyecto-final/ui
+            dockerfile: mlops_proyecto-final/ui/Dockerfile
             image: mlops-realestate-ui
     steps:
       - name: Checkout
