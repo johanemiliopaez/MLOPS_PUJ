@@ -53,6 +53,18 @@ data:
         candidate_mae FLOAT,
         champion_mae FLOAT
     );
+
+    CREATE TABLE IF NOT EXISTS inference_logs (
+        request_id UUID PRIMARY KEY,
+        inference_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        input_data JSONB NOT NULL,
+        prediction FLOAT NOT NULL,
+        model_name VARCHAR(100) NOT NULL,
+        model_version VARCHAR(50) NOT NULL,
+        response_time_ms FLOAT NOT NULL,
+        status VARCHAR(50) DEFAULT 'success',
+        error_message TEXT
+    );
     
     -- 4. Dar permisos sobre estas tablas y secuencias al usuario mlops_user
     GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO mlops_user;

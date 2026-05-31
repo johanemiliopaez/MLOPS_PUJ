@@ -110,9 +110,40 @@ kubectl port-forward svc/minio 9001:9001 --address 0.0.0.0 &
 Para validar la resiliencia de la API de inferencia:
 1. Accede a **Locust** e inicia un enjambre (ej. 50 usuarios).
 2. Ingresa a **Grafana** y configura `http://prometheus:9090` como tu Data Source de Prometheus.
-3. Importa o crea paneles con las siguientes consultas (PromQL):
+3. Grafana ya queda aprovisionado con fuentes de datos y dashboard via ConfigMap:
+   * **Prometheus** (métricas de FastAPI)
+   * **Postgres** (consulta `inference_logs` para métricas de negocio)
+4. Paneles clave:
    * **Tráfico (RPS):** `sum(rate(http_requests_total[1m]))`
-   * **Latencia Promedio:** `sum(rate(http_request_duration_seconds_sum[1m])) / sum(rate(http_request_duration_seconds_count[1m]))`
+   * **Latencia P95:** `histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[1m])) by (le))`
+   * **Precio promedio / P95** desde `inference_logs`
+
+---
+
+## 🔄 CI/CD (GitHub Actions)
+Se incluyen workflows para construir y publicar imágenes en DockerHub:
+* `mlops-proyecto-final/.github/workflows/mlops-final-images.yml`
+
+Requiere los secretos:
+* `DOCKERHUB_USERNAME`
+* `DOCKERHUB_TOKEN`
+
+Las imágenes se publican con etiquetas `latest` y `${GITHUB_SHA}`.
+
+---
+
+## 🚦 GitOps con Argo CD
+El manifiesto de aplicación está en:
+* `mlops_proyecto-final/argocd/application.yaml`
+
+Argo CD debe estar instalado previamente en el clúster (namespace `argocd`).
+
+---
+
+## ✅ Probes y Recursos
+Todos los deployments declaran:
+* `resources.requests` y `resources.limits`
+* `readinessProbe` y `livenessProbe`
 
 ---
 *Desarrollado por Jesus Alberto Puenayan Quiceno como parte de investigación y arquitectura de soluciones TI.*

@@ -1,0 +1,62 @@
+name: mlops-proyecto-final-images
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "mlops_proyecto-final/api/**"
+      - "mlops_proyecto-final/ui/**"
+      - "mlops_proyecto-final/airflow_image/**"
+      - "mlops_proyecto-final/mlflow_image/**"
+      - "mlops_proyecto-final/.github/workflows/mlops-final-images.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - name: api
+            context: mlops_proyecto-final/api
+            dockerfile: mlops_proyecto-final/api/Dockerfile
+            image: puenayan1/mlops-realestate-api
+          - name: ui
+            context: mlops_proyecto-final/ui
+            dockerfile: mlops_proyecto-final/ui/Dockerfile
+            image: puenayan1/mlops-realestate-ui
+          - name: airflow
+            context: mlops_proyecto-final/airflow_image
+            dockerfile: mlops_proyecto-final/airflow_image/Dockerfile
+            image: puenayan1/mlops-realestate-airflow
+          - name: mlflow
+            context: mlops_proyecto-final/mlflow_image
+            dockerfile: mlops_proyecto-final/mlflow_image/Dockerfile
+            image: puenayan1/mlops-realestate-mlflow
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: |
+            ${{ matrix.image }}:latest
+            ${{ matrix.image }}:${{ github.sha }}

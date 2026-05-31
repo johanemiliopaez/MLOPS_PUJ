@@ -384,7 +384,7 @@
                         "editorMode": "code",
                         "format": "table",
                         "rawQuery": true,
-                        "rawSql": "SELECT \n  CASE WHEN prediction = 1 THEN 'Riesgo (Readmitido)' ELSE 'Seguro (No Readmitido)' END as metric,\n  count(*) as value\nFROM inference_logs\nWHERE inference_timestamp > now() - interval '1 hour'\nGROUP BY prediction;",
+                        "rawSql": "SELECT \n  'Precio Promedio' as metric,\n  avg(prediction) as value\nFROM inference_logs\nWHERE inference_timestamp > now() - interval '1 hour';",
                         "sql": {
                           "columns": [
                             {
@@ -485,7 +485,7 @@
                         "editorMode": "code",
                         "format": "table",
                         "rawQuery": true,
-                        "rawSql": "SELECT \n  CASE WHEN prediction = 1 THEN 'Riesgo de Readmisión' ELSE 'Sin Riesgo' END as metric,\n  count(*) as value\nFROM inference_logs\nWHERE inference_timestamp > now() - interval '1 hour'\nGROUP BY prediction;",
+                        "rawSql": "SELECT \n  'Precio P95' as metric,\n  percentile_cont(0.95) within group (order by prediction) as value\nFROM inference_logs\nWHERE inference_timestamp > now() - interval '1 hour';",
                         "sql": {
                           "columns": [
                             {

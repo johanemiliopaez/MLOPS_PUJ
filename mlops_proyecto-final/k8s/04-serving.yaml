@@ -14,6 +14,18 @@ spec:
         resources:
           requests: { cpu: "200m", memory: "256Mi" }
           limits: { cpu: "500m", memory: "512Mi" }
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8000
+          initialDelaySeconds: 20
+          periodSeconds: 20
         envFrom:
         - configMapRef: { name: mlops-config }
         - secretRef: { name: mlops-secrets }
@@ -41,6 +53,18 @@ spec:
         resources:
           requests: { cpu: "100m", memory: "256Mi" }
           limits: { cpu: "300m", memory: "512Mi" }
+        readinessProbe:
+          httpGet:
+            path: /_stcore/health
+            port: 8501
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        livenessProbe:
+          httpGet:
+            path: /_stcore/health
+            port: 8501
+          initialDelaySeconds: 25
+          periodSeconds: 20
         envFrom:
         - configMapRef: { name: mlops-config }
         - secretRef: { name: mlops-secrets }
