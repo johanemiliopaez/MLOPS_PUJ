@@ -14,7 +14,7 @@ data:
   AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
   AIRFLOW__CORE__LOAD_EXAMPLES: "false"
 ---
-apiVersion: v1
+apiVersion: v1.yaml
 kind: ConfigMap
 metadata:
   name: postgres-init
@@ -37,6 +37,7 @@ data:
         status VARCHAR(50),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+
 
     CREATE TABLE IF NOT EXISTS clean_data (
         id SERIAL PRIMARY KEY,
