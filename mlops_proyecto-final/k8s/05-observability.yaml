@@ -18,23 +18,19 @@ data:
     from locust import HttpUser, task, between
     import random
 
-    class DiabetesPredictorUser(HttpUser):
+    class RealEstatePredictorUser(HttpUser):
         wait_time = between(1, 2)
 
         @task(5)
         def predict_readmission(self):
             payload = {
-                "age": random.choice(["[40-50)", "[50-60)", "[60-70)", "[70-80)", "[80-90)"]),
-                "time_in_hospital": random.randint(1, 14),
-                "num_lab_procedures": random.randint(1, 100),
-                "num_procedures": random.randint(0, 6),
-                "num_medications": random.randint(1, 50),
-                "number_outpatient": random.randint(0, 5),
-                "number_emergency": random.randint(0, 5),
-                "number_inpatient": random.randint(0, 5),
-                "number_diagnoses": random.randint(1, 16),
-                "change": random.choice(["No", "Ch"]),
-                "diabetesMed": random.choice(["No", "Yes"])
+                "bed": random.randint(1, 6),
+                "bath": random.choice([1, 1.5, 2, 2.5, 3]),
+                "acre_lot": round(random.uniform(0.05, 1.5), 2),
+                "house_size": random.randint(600, 4200),
+                "status": random.choice(["ready for sale", "ready to build"]),
+                "city": random.choice(["Bogotá", "Tunja", "Sogamoso", "Pereira", "Medellín", "Cali"]),
+                "state": random.choice(["Cundinamarca", "Boyacá", "Risaralda", "Antioquia", "Valle del Cauca"])
             }
             with self.client.post("/predict", json=payload, catch_response=True) as response:
                 if response.status_code == 200:
@@ -59,6 +55,9 @@ spec:
       - name: prometheus
         image: prom/prometheus
         ports: [{ containerPort: 9090 }]
+        resources:
+          requests: { cpu: "100m", memory: "256Mi" }
+          limits: { cpu: "300m", memory: "512Mi" }
         volumeMounts:
         - name: prom-config
           mountPath: /etc/prometheus/prometheus.yml
@@ -87,6 +86,9 @@ spec:
       - name: grafana
         image: grafana/grafana:10.4.0
         ports: [{ containerPort: 3000 }]
+        resources:
+          requests: { cpu: "100m", memory: "256Mi" }
+          limits: { cpu: "300m", memory: "512Mi" }
         env:
         - name: GF_SECURITY_ADMIN_PASSWORD
           value: "admin"
@@ -112,6 +114,9 @@ spec:
         image: locustio/locust:2.24.1
         command: ["locust", "-f", "/mnt/locust/locustfile.py", "--host", "http://fastapi:8000"]
         ports: [{ containerPort: 8089 }]
+        resources:
+          requests: { cpu: "100m", memory: "256Mi" }
+          limits: { cpu: "300m", memory: "512Mi" }
         volumeMounts:
         - name: locust-scripts
           mountPath: /mnt/locust

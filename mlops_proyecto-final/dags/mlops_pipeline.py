@@ -23,24 +23,28 @@ from mlflow.models.signature import infer_signature
 from evidently.report import Report
 from evidently.metric_preset import DataDriftPreset
 
-# --- CONFIGURACIÓN DE ENTORNO ESTRICTA (EVITA CONGELAMIENTOS EN DOCKER) ---
-os.environ["AWS_ACCESS_KEY_ID"] = "minio_admin"
-os.environ["AWS_SECRET_ACCESS_KEY"] = "minio_password"
-os.environ["MLFLOW_S3_ENDPOINT_URL"] = "http://minio:9000"
-os.environ["AWS_DEFAULT_REGION"] = "us-east-1"
+# --- CONFIGURACIÓN DE ENTORNO (SECRETS/CONFIGMAPS) ---
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "minio_admin")
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "minio_password")
+MINIO_ENDPOINT = os.getenv("MLFLOW_S3_ENDPOINT_URL", "http://minio:9000")
+AWS_DEFAULT_REGION = os.getenv("AWS_DEFAULT_REGION", "us-east-1")
+MINIO_BUCKET = os.getenv("MINIO_BUCKET", "mlflow-artifacts")
+
+os.environ["AWS_ACCESS_KEY_ID"] = AWS_ACCESS_KEY_ID
+os.environ["AWS_SECRET_ACCESS_KEY"] = AWS_SECRET_ACCESS_KEY
+os.environ["MLFLOW_S3_ENDPOINT_URL"] = MINIO_ENDPOINT
+os.environ["AWS_DEFAULT_REGION"] = AWS_DEFAULT_REGION
 
 # --- CONFIGURACIÓN GLOBAL ---
-DB_URI = "postgresql+psycopg2://mlops_user:mlops_password@postgres:5432/mlops_db"
-MLFLOW_URI = "http://mlflow:5000"
-DATA_API_URL = "http://data-api:80/data" 
-MODEL_NAME = "RealEstate_Pricing_Model"
+DB_URI = os.getenv("DB_URI", "postgresql+psycopg2://mlops_user:mlops_password@postgres:5432/mlops_db")
+MLFLOW_URI = os.getenv("MLFLOW_TRACKING_URI", "http://mlflow:5000")
+DATA_API_URL = os.getenv("DATA_API_URL", "http://data-api:80/data")
+MODEL_NAME = os.getenv("MODEL_NAME", "RealEstate_Pricing_Model")
 
-MINIO_ENDPOINT = "http://minio:9000"
-MINIO_ACCESS_KEY = "minio_admin"
-MINIO_SECRET_KEY = "minio_password"
-MINIO_BUCKET = "mlflow-artifacts" 
+MINIO_ACCESS_KEY = AWS_ACCESS_KEY_ID
+MINIO_SECRET_KEY = AWS_SECRET_ACCESS_KEY
 
-GROUP_NUMBER = 1 
+GROUP_NUMBER = int(os.getenv("GROUP_NUMBER", "1"))
 
 default_args = {
     'owner': 'mlops_team',

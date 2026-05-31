@@ -9,6 +9,8 @@ data:
   DATA_API_URL: "http://data-api:80/data"
   API_URL: "http://fastapi:8000"
   AWS_DEFAULT_REGION: "us-east-1"
+  MINIO_BUCKET: "mlflow-artifacts"
+  GROUP_NUMBER: "1"
   AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
   AIRFLOW__CORE__LOAD_EXAMPLES: "false"
 ---
@@ -52,6 +54,19 @@ data:
         reason TEXT,
         candidate_mae FLOAT,
         champion_mae FLOAT
+    );
+
+    CREATE TABLE IF NOT EXISTS inference_logs (
+        id SERIAL PRIMARY KEY,
+        request_id VARCHAR(100) NOT NULL,
+        inference_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        input_data JSONB NOT NULL,
+        prediction FLOAT,
+        model_name VARCHAR(200),
+        model_version VARCHAR(200),
+        response_time_ms FLOAT,
+        status VARCHAR(50),
+        error_message TEXT
     );
     
     -- 4. Dar permisos sobre estas tablas y secuencias al usuario mlops_user

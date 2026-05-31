@@ -54,7 +54,7 @@ spec:
           mc anonymous set public myminio/mlflow-artifacts;
       containers:
       - name: mlflow
-        image: puenayan1/mlops-realestate-mlflow:v1
+        image: innovacion/mlops-realestate-mlflow:v1
         command:
         - bash
         - -c
@@ -90,7 +90,7 @@ spec:
         volumeMounts: [{ mountPath: /opt/airflow/logs, name: airflow-logs }]
       containers:
       - name: scheduler
-        image: puenayan1/mlops-realestate-airflow:v1
+        image: innovacion/mlops-realestate-airflow:v1
         command: ["airflow", "scheduler"]
         resources:
           requests: { cpu: "250m", memory: "512Mi" }
@@ -121,7 +121,7 @@ spec:
         command: ["sh", "-c", "chmod -R 777 /opt/airflow/logs"]
         volumeMounts: [{ mountPath: /opt/airflow/logs, name: airflow-logs }]
       - name: airflow-db-init
-        image: puenayan1/mlops-realestate-airflow:v1
+        image: innovacion/mlops-realestate-airflow:v1
         command: ["airflow", "db", "upgrade"]
         envFrom:
         - configMapRef: { name: mlops-config }
@@ -130,7 +130,7 @@ spec:
         - name: AIRFLOW__DATABASE__SQL_ALCHEMY_CONN
           valueFrom: { secretKeyRef: { name: mlops-secrets, key: AIRFLOW_DB_URI } }
       - name: airflow-user-create
-        image: puenayan1/mlops-realestate-airflow:v1
+        image: innovacion/mlops-realestate-airflow:v1
         command: ["bash", "-c", "airflow users create -r Admin -u admin -p admin -e admin@example.com -f admin -l admin || true"]
         envFrom:
         - configMapRef: { name: mlops-config }
@@ -140,7 +140,7 @@ spec:
           valueFrom: { secretKeyRef: { name: mlops-secrets, key: AIRFLOW_DB_URI } }
       containers:
       - name: webserver
-        image: puenayan1/mlops-realestate-airflow:v1
+        image: innovacion/mlops-realestate-airflow:v1
         command: ["airflow", "webserver"]
         ports: [{ containerPort: 8080 }]
         resources:

@@ -49,28 +49,34 @@ kubectl delete pvc --all
 ```
 
 ### 2. Despliegue Secuencial
-Ejecuta los manifiestos en el siguiente orden. Es **crítico** respetar la pausa de 15 segundos para que PostgreSQL ejecute el `init.sql` antes de que Airflow intente conectarse.
+Ejecuta los manifiestos con **Kustomize** (aplica los mapeos de imágenes hacia `innovacion/*`). Es **crítico** respetar la pausa de 15 segundos para que PostgreSQL ejecute el `init.sql` antes de que Airflow intente conectarse.
 
 ```bash
-# 1. Configuración, Secretos y Script de BD
-kubectl apply -f k8s/01-config.yaml
+# 1. Configuración, Infraestructura, Orquestación y Observabilidad
+kubectl apply -k k8s/
 
-# 2. Bases de Datos y Almacenamiento (Postgres & MinIO)
-kubectl apply -f k8s/02-infrastructure.yaml
-
-# 3. Dar tiempo al provisionamiento del esquema SQL
+# 2. Dar tiempo al provisionamiento del esquema SQL
 sleep 15
-
-# 4. Orquestación, APIs y Observabilidad
-kubectl apply -f k8s/03-mlops-core.yaml
-kubectl apply -f k8s/04-serving.yaml
-kubectl apply -f k8s/05-observability.yaml
 ```
 
 Verifica que todos los Pods estén en estado `1/1 Running`:
 ```bash
 kubectl get pods -w
 ```
+
+---
+
+## 🔄 CI/CD y GitOps
+
+Este repositorio incluye un workflow de GitHub Actions para construir y publicar imágenes en DockerHub
+(`.github/workflows/docker-images.yml`). Configura los siguientes secrets en GitHub:
+
+- `DOCKERHUB_USERNAME`
+- `DOCKERHUB_TOKEN`
+
+Para GitOps, se incluye un manifiesto de Argo CD en `argocd/application.yaml` con soporte explícito de
+Kustomize. Aplícalo en el namespace `argocd` y Argo CD sincronizará la carpeta `k8s/` automáticamente
+con el clúster.
 
 ---
 

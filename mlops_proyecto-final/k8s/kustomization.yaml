@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - 01-config.yaml
+  - 02-infrastructure.yaml
+  - 03-mlops-core.yaml
+  - 04-serving.yaml
+  - 05-observability.yaml
+
+images:
+  - name: puenayan1/mlops-realestate-airflow
+    newName: innovacion/mlops-realestate-airflow
+  - name: puenayan1/mlops-realestate-mlflow
+    newName: innovacion/mlops-realestate-mlflow
+  - name: puenayan1/mlops-realestate-api
+    newName: innovacion/mlops-realestate-api
+  - name: puenayan1/mlops-realestate-ui
+    newName: innovacion/mlops-realestate-ui

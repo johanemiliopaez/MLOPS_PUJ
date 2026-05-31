@@ -9,7 +9,7 @@ spec:
     spec:
       containers:
       - name: fastapi
-        image: puenayan1/mlops-realestate-api:v1
+        image: innovacion/mlops-realestate-api:v1
         ports: [{ containerPort: 8000 }]
         resources:
           requests: { cpu: "200m", memory: "256Mi" }
@@ -36,7 +36,7 @@ spec:
     spec:
       containers:
       - name: streamlit
-        image: puenayan1/mlops-realestate-ui:v1
+        image: innovacion/mlops-realestate-ui:v1
         ports: [{ containerPort: 8501 }]
         resources:
           requests: { cpu: "100m", memory: "256Mi" }
