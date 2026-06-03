@@ -40,7 +40,7 @@ spec:
         ports: [{ containerPort: 8501 }]
         resources:
           requests: { cpu: "100m", memory: "256Mi" }
-          limits: { cpu: "300m", memory: "512Mi" }
+          limits: { cpu: "300m", memory: "712Mi" }
         envFrom:
         - configMapRef: { name: mlops-config }
         - secretRef: { name: mlops-secrets }
