@@ -11,9 +11,13 @@ resources:
 images:
   - name: puenayan1/mlops-realestate-airflow
     newName: innovacion/mlops-realestate-airflow
+    newTag: latest
   - name: puenayan1/mlops-realestate-mlflow
     newName: innovacion/mlops-realestate-mlflow
+    newTag: latest
   - name: puenayan1/mlops-realestate-api
     newName: innovacion/mlops-realestate-api
+    newTag: latest
   - name: puenayan1/mlops-realestate-ui
     newName: innovacion/mlops-realestate-ui
+    newTag: latest
