@@ -9,7 +9,12 @@ spec:
     repoURL: https://github.com/johanemiliopaez/MLOPS_PUJ.git
     targetRevision: main
     path: mlops_proyecto-final/k8s
-    kustomize: {}
+    kustomize:
+      images:
+        - innovacion/mlops-realestate-airflow=innovacion/mlops-realestate-airflow:latest
+        - innovacion/mlops-realestate-api=innovacion/mlops-realestate-api:latest
+        - innovacion/mlops-realestate-mlflow=innovacion/mlops-realestate-mlflow:latest
+        - innovacion/mlops-realestate-ui=innovacion/mlops-realestate-ui:latest
   destination:
     server: https://kubernetes.default.svc
     namespace: default
