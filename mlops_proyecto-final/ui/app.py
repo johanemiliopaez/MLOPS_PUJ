@@ -3,7 +3,7 @@ import requests
 import pandas as pd
 from sqlalchemy import create_engine, text
 import os
-
+#Prueba cambio
 # --- CONFIGURACIÓN DE ENTORNO ---
 API_URL = os.getenv("API_URL", "http://fastapi:8000")
 DB_URI = os.getenv("DB_URI", "postgresql+psycopg2://mlops_user:mlops_password@postgres:5432/mlops_db")
