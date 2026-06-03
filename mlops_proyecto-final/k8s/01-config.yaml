@@ -14,7 +14,7 @@ data:
   AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
   AIRFLOW__CORE__LOAD_EXAMPLES: "false"
 ---
-apiVersion: v1.yaml
+apiVersion: v1
 kind: ConfigMap
 metadata:
   name: postgres-init
